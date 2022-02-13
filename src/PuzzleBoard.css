@@ -1,0 +1,22 @@
+.PuzzleBoard {
+    display: grid;
+    margin: 2rem;
+    padding: 2px 1px 1px 2px;
+    width: fit-content;
+    background-color: black;
+}
+
+.PuzzleSquare {
+    all: unset;
+    user-select: none;
+    margin: 1px;
+    width: 2rem;
+    height: 2rem;
+    line-height: 2rem;
+    text-align: center;
+    background-color: whitesmoke;
+}
+
+.PuzzleSquare:focus {
+    background-color:goldenrod;
+}
