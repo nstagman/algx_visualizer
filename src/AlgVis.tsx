@@ -15,14 +15,9 @@ const AniButton: Component<any> = (props: any) => {
     props.boardState.forEach((cell: any) => {
       puzzle.push(cell.getValue());
     })
-  const mat: AlgXMatrix = buildMatrix(puzzle, props.dim);
+    const mat: AlgXMatrix = buildMatrix(puzzle, props.dim);
     console.log(decodeSolution(mat.algXSearch()));
-    // props.dn(3, 1);
   };
-
-  // const onDL = (event: MouseEvent) => {
-  //   props.dl(1,1,2,2);
-  // };
 
   return(
     <div>

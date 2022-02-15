@@ -192,8 +192,34 @@ class AlgXMatrix {
     }
   }
 
+  // cover2(node: AlgXNode): void {
+  //   const col: AlgXNode = this.cols[node.col];
+  //   col.right.left = col.left;
+  //   col.left.right = col.right;
+  //   for(const vItr of col.iterateDown()){
+  //     for(const hItr of vItr.iterateRight()){
+  //       hItr.up.down = hItr.down;
+  //       hItr.down.up = hItr.up;
+  //       if(hItr.col >= 0){ this.cols[hItr.col].count -= 1; }
+  //     }
+  //   }
+  // }
+
+  // uncover2(node: AlgXNode): void {
+  //   const col: AlgXNode = this.cols[node.col];
+  //   for(const vItr of col.iterateUp()){
+  //     for(const hItr of vItr.iterateLeft(false)){
+  //       hItr.up.down = hItr;
+  //       hItr.down.up = hItr;
+  //       if(hItr.col >= 0){ this.cols[hItr.col].count += 1; }
+  //     }
+  //   }
+  //   col.right.left = col;
+  //   col.left.right = col;
+  // }
+
   algXSearch(): Array<number> {
-    const solutions: Array<number> = []
+    let solutions: Array<number> = []
 
     const search = (): boolean => {
       if(this.isEmpty()){ //solution exists when matrix is empty
@@ -208,19 +234,22 @@ class AlgXMatrix {
         solutions.push(vItr.row); //select next node as candidate in solution
         this.cover(this.rows[vItr.row]);
         // for(const hItr of vItr.iterateRight(false)){
-        //   if(hItr.col >= 0){ this.cover(hItr); }
+        //   if(hItr.col >= 0){ this.cover2(hItr); }
         // }
+
         //search again after covering
         //if solution is found on this branch, leave loop and stop
         if(search()){ break; }
+
         //solution not found on this branch, pop it then uncover the covered columns
         solutions.pop();
         this.uncover(this.rows[vItr.row]);
-        // for(const hItr of vItr.iterateLeft()){
-        //   if(hItr.col >= 0){ this.uncover(hItr); }
+        // for(const hItr of vItr.iterateLeft(false)){
+        //   if(hItr.col >= 0){ this.uncover2(hItr); }
         // }
         //continue search on remaining nodes in this column
       }
+
       return this.solved;
     };
 
@@ -243,8 +272,8 @@ const colConstraint = (row: number, dim: number): number => {
   return 2*(dim*dim) + (row % (dim*dim));
 };
 const boxConstraint = (row: number, dim: number): number => {
-  return 3*(dim*dim) + (row/(Math.sqrt(dim)*(dim*dim)))|0*(dim*Math.sqrt(dim)) +
-    ((row/(Math.sqrt(dim)*dim))|0 % Math.sqrt(dim))*dim + (row % dim);
+  return 3*(dim*dim) + ((row/(Math.sqrt(dim)*(dim*dim)))|0) * (dim*Math.sqrt(dim)) +
+    (((row/(Math.sqrt(dim)*dim))|0) % Math.sqrt(dim)) * dim + (row % dim);
 };
 
 const buildMatrix = (puzzle: Array<number>, dim: number): AlgXMatrix => {
@@ -276,7 +305,6 @@ const buildMatrix = (puzzle: Array<number>, dim: number): AlgXMatrix => {
 
 const decodeSolution = (solution: Array<number>): Array<number> => {
   let solvedPuzzle: Array<number> = [];
-  console.log(solution);
   const dim = Math.sqrt(solution.length);
   for(let i=0; i< solution.length; i++){ solvedPuzzle.push(0); }
   solution.forEach((row: number) => {
