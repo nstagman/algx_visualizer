@@ -57,7 +57,7 @@ class AlgXNode {
 }
 
 //Toroidally linked matrix
-class AlgX_Matrix {
+class AlgXMatrix {
   root: AlgXNode;
   rows: Array<AlgXNode>;
   cols: Array<AlgXNode>;
@@ -164,7 +164,7 @@ class AlgX_Matrix {
           //'remove' each node from its column
           hItr.up.down = hItr.down;
           hItr.down.up = hItr.up;
-          this.cols[hItr.col].count -= 1;
+          if(hItr.col >= 0){ this.cols[hItr.col].count -= 1; }
         }
       }
     }
@@ -183,7 +183,7 @@ class AlgX_Matrix {
           //'insert' each node back in to its column
           hItr.up.down = hItr;
           hItr.down.up = hItr;
-          this.cols[hItr.col].count += 1;
+          if(hItr.col >= 0){ this.cols[hItr.col].count += 1; }
         }
       }
       //'insert' node's column back into matrix
@@ -247,14 +247,14 @@ const boxConstraint = (row: number, dim: number): number => {
     ((row/(Math.sqrt(dim)*dim))|0 % Math.sqrt(dim))*dim + (row % dim);
 };
 
-const buildMatrix = (puzzle: Array<number>, dim: number): AlgX_Matrix => {
+const buildMatrix = (puzzle: Array<number>, dim: number): AlgXMatrix => {
   const numRows = dim*dim*dim;
   const numcols = dim*dim*4;
-  const matrix = new AlgX_Matrix(numRows, numcols);
+  const matrix = new AlgXMatrix(numRows, numcols);
   puzzle.forEach((cell: number, i: number) => {
     if(cell === 0){
       for(let j=0; j<dim; j++){
-        let row = i * dim * j;
+        let row = i * dim + j;
         const oc = oneConstraint(row, dim);
         const rc = rowConstraint(row, dim);
         const cc = colConstraint(row, dim);
@@ -276,6 +276,7 @@ const buildMatrix = (puzzle: Array<number>, dim: number): AlgX_Matrix => {
 
 const decodeSolution = (solution: Array<number>): Array<number> => {
   let solvedPuzzle: Array<number> = [];
+  console.log(solution);
   const dim = Math.sqrt(solution.length);
   for(let i=0; i< solution.length; i++){ solvedPuzzle.push(0); }
   solution.forEach((row: number) => {
@@ -283,3 +284,5 @@ const decodeSolution = (solution: Array<number>): Array<number> => {
   });
   return solvedPuzzle;
 };
+
+export { AlgXMatrix, buildMatrix, decodeSolution }

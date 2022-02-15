@@ -36,8 +36,8 @@ const App: Component = () => {
       <button onClick={fxf}> 4x4 </button>
       <button onClick={nxn}> 9x9 </button>
       <PuzzleBoard boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
-      <AlgxAnimator {...aniprop} />
-      <AniButton {...aniprop} />
+      {/* <AlgxAnimator {...aniprop} /> */}
+      <AniButton boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
     </div>
   );
 };

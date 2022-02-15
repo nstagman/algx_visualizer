@@ -1,4 +1,5 @@
 import './AlgVis.css'
+import { AlgXMatrix, buildMatrix, decodeSolution } from './AlgX';
 import { JSXElement, Component, For, createSignal, onMount } from 'solid-js';
 
 
@@ -10,17 +11,22 @@ type AniProp = {
 const AniButton: Component<any> = (props: any) => {
 
   const onDN = (event: MouseEvent) => {
-    props.dn(3, 1);
+    let puzzle: Array<number> = [];
+    props.boardState.forEach((cell: any) => {
+      puzzle.push(cell.getValue());
+    })
+  const mat: AlgXMatrix = buildMatrix(puzzle, props.dim);
+    console.log(decodeSolution(mat.algXSearch()));
+    // props.dn(3, 1);
   };
 
-  const onDL = (event: MouseEvent) => {
-    props.dl(1,1,2,2);
-  };
+  // const onDL = (event: MouseEvent) => {
+  //   props.dl(1,1,2,2);
+  // };
 
   return(
     <div>
-      <button onClick={onDN}>dn</button>
-      <button onClick={onDL}>dl</button>
+      <button onClick={onDN}> solve </button>
     </div>
   )
 };
