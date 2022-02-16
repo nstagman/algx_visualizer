@@ -147,44 +147,41 @@ class AlgXMatrix {
   }
 
   //cover a row (partial solution) of the matrix
-  //'removes' the column of each node in the specified row
-  //then finds all nodes that shared a row with a
-  //node from a removed column and 'removes' it from its respective column
-  cover(rowHead: AlgXNode): void {
+  //'removes' the column of each node in rowHead from the matrix
+  //iterate down each 'removed' column and cover each row
+  coverPartialSolution(rowHead: AlgXNode): void {
     //for each node in selected row
-    for(const node of rowHead.iterateRight()){
+    for(const rowNode of rowHead.iterateRight()){
       //'remove' node's column from matrix
-      let col = this.cols[node.col];
+      let col = this.cols[rowNode.col];
       col.right.left = col.left;
       col.left.right = col.right;
       //iterate down from node's column header
-      for(const vItr of col.iterateDown()){
-        //then iterate right across each row
-        for(const hItr of vItr.iterateRight()){
-          //'remove' each node from its column
-          hItr.up.down = hItr.down;
-          hItr.down.up = hItr.up;
-          if(hItr.col >= 0){ this.cols[hItr.col].count -= 1; }
-        }
+      for(const colNode of col.iterateDown()){
+        this.coverRow(colNode);
       }
+    }
+  }
+
+  //iterate right from start node and remove each node from its column
+  coverRow(startNode: AlgXNode): void {
+    for(const node of startNode.iterateRight()){
+      //'remove' each node from its column
+      node.up.down = node.down;
+      node.down.up = node.up;
+      if(node.col >= 0){ this.cols[node.col].count -= 1; }
     }
   }
 
   //performs the cover function in reverse for specified row
   //restoring all columns and associated nodes back into the matrix
-  uncover(rowHead: AlgXNode): void {
+  uncoverPartialSolution(rowHead: AlgXNode): void {
     //for each node in selected row
-    for(const node of rowHead.iterateLeft()){
-      let col = this.cols[node.col];
+    for(const rowNode of rowHead.iterateLeft()){
+      let col = this.cols[rowNode.col];
       //iterate up from node's column header
-      for(const vItr of col.iterateUp()){
-        //then iterate left across each row
-        for(const hItr of vItr.iterateLeft()){
-          //'insert' each node back in to its column
-          hItr.up.down = hItr;
-          hItr.down.up = hItr;
-          if(hItr.col >= 0){ this.cols[hItr.col].count += 1; }
-        }
+      for(const colNode of col.iterateUp()){
+        this.uncoverRow(colNode);
       }
       //'insert' node's column back into matrix
       col.right.left = col;
@@ -192,31 +189,15 @@ class AlgXMatrix {
     }
   }
 
-  // cover2(node: AlgXNode): void {
-  //   const col: AlgXNode = this.cols[node.col];
-  //   col.right.left = col.left;
-  //   col.left.right = col.right;
-  //   for(const vItr of col.iterateDown()){
-  //     for(const hItr of vItr.iterateRight()){
-  //       hItr.up.down = hItr.down;
-  //       hItr.down.up = hItr.up;
-  //       if(hItr.col >= 0){ this.cols[hItr.col].count -= 1; }
-  //     }
-  //   }
-  // }
-
-  // uncover2(node: AlgXNode): void {
-  //   const col: AlgXNode = this.cols[node.col];
-  //   for(const vItr of col.iterateUp()){
-  //     for(const hItr of vItr.iterateLeft(false)){
-  //       hItr.up.down = hItr;
-  //       hItr.down.up = hItr;
-  //       if(hItr.col >= 0){ this.cols[hItr.col].count += 1; }
-  //     }
-  //   }
-  //   col.right.left = col;
-  //   col.left.right = col;
-  // }
+  //iterate left from start node and insert each node back into its column
+  uncoverRow(startNode: AlgXNode): void {
+    for(const node of startNode.iterateLeft()){
+      //'insert' each node back in to its column
+      node.up.down = node;
+      node.down.up = node;
+      if(node.col >= 0){ this.cols[node.col].count += 1; }
+    }
+  }
 
   algXSearch(): Array<number> {
     let solutions: Array<number> = []
@@ -229,27 +210,20 @@ class AlgXMatrix {
       //select col with minimum nodes to continue search
       let selCol: AlgXNode = this.selectMinCol();
       if(selCol.count < 1){ return false; } //this branch has failed
+
       //iterate down from selected columns
       for(const vItr of selCol.iterateDown()){
-        solutions.push(vItr.row); //select next node as candidate in solution
-        this.cover(this.rows[vItr.row]);
-        // for(const hItr of vItr.iterateRight(false)){
-        //   if(hItr.col >= 0){ this.cover2(hItr); }
-        // }
+        solutions.push(vItr.row); //select next node as partial solution
+        this.coverPartialSolution(this.rows[vItr.row]);
 
         //search again after covering
         //if solution is found on this branch, leave loop and stop
         if(search()){ break; }
 
-        //solution not found on this branch, pop it then uncover the covered columns
+        //solution not found on this branch, pop it then uncover the selected partial solution
         solutions.pop();
-        this.uncover(this.rows[vItr.row]);
-        // for(const hItr of vItr.iterateLeft(false)){
-        //   if(hItr.col >= 0){ this.uncover2(hItr); }
-        // }
-        //continue search on remaining nodes in this column
+        this.uncoverPartialSolution(this.rows[vItr.row]);
       }
-
       return this.solved;
     };
 
@@ -262,6 +236,7 @@ class AlgXMatrix {
   }
 }
 
+//--- Sudoku specific functions below ---
 const oneConstraint = (row: number, dim: number): number => {
   return (row/dim)|0;
 };
