@@ -1,30 +1,7 @@
 import './AlgVis.css'
 import { AlgXMatrix, buildMatrix, decodeSolution } from './AlgX';
-import { JSXElement, Component, For, createSignal, onMount } from 'solid-js';
+import { JSXElement, Component, createEffect, onMount } from 'solid-js';
 
-
-type AniProp = {
-  dn?: (r: number, c: number) => void,
-  dl?: (r1: number, c1: number, r2: number, c2: number) => void
-};
-
-const AniButton: Component<any> = (props: any) => {
-
-  const onDN = (event: MouseEvent) => {
-    let puzzle: Array<number> = [];
-    props.boardState.forEach((cell: any) => {
-      puzzle.push(cell.getValue());
-    })
-    const mat: AlgXMatrix = buildMatrix(puzzle, props.dim);
-    console.log(decodeSolution(mat.algXSearch()));
-  };
-
-  return(
-    <div>
-      <button onClick={onDN}> solve </button>
-    </div>
-  )
-};
 
 const AlgxAnimator: Component<any> = (props: any): JSXElement => {
   const nodeSize = 12;
@@ -34,8 +11,19 @@ const AlgxAnimator: Component<any> = (props: any): JSXElement => {
   const height = 6 * gridSize;
   let canvas: any;
   let context: CanvasRenderingContext2D;
+  let matrix: AlgXMatrix;
+  let puzzle: Array<number>;
   onMount(() => {
     context = canvas.getContext('2d');
+  });
+
+  createEffect(() => {
+    puzzle = [];
+    props.boardState.forEach((cell: any) => {
+      puzzle.push(cell.getValue());
+    });
+    matrix = buildMatrix(puzzle, Math.sqrt(puzzle.length));
+    console.log(decodeSolution(matrix.algXSearch()));
   });
 
   const drawNode = (r: number, c: number) => {
@@ -46,13 +34,10 @@ const AlgxAnimator: Component<any> = (props: any): JSXElement => {
     console.log('dl click')
   }
 
-  props.dn = drawNode;
-  props.dl = drawLink;
-
   return(
     <canvas ref={canvas} width={width} height={height}/>
   )
 }
 
 
-export { AlgxAnimator, AniButton, AniProp };
+export { AlgxAnimator };

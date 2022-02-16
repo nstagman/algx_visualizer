@@ -113,10 +113,12 @@ class AlgXMatrix {
       this.cols[col].count += 1;
       newRow.push(newNode);
     });
+    //iterate through new row and set left and right links
     newRow.forEach((node: AlgXNode, i: number) => {
       node.right = i < newRow.length - 1 ? newRow[i+1] : this.rows[node.row];
       node.left = i > 0 ? newRow[i-1] : this.rows[node.row];
     });
+    //set left and right links of row header
     this.rows[newRow[0].row].right = newRow[0];
     this.rows[newRow[0].row].left = newRow[newRow.length-1];
   }
@@ -201,7 +203,7 @@ class AlgXMatrix {
 
   algXSearch(): Array<number> {
     let solutions: Array<number> = []
-
+    //recursive search function
     const search = (): boolean => {
       if(this.isEmpty()){ //solution exists when matrix is empty
         this.solved = true;
@@ -237,6 +239,8 @@ class AlgXMatrix {
 }
 
 //--- Sudoku specific functions below ---
+
+//constraint functions - returns column of node for a constraint when given the row and puzzle dimension
 const oneConstraint = (row: number, dim: number): number => {
   return (row/dim)|0;
 };

@@ -1,13 +1,11 @@
 import { Component, createSignal } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
-import { AlgxAnimator, AniButton, AniProp } from './AlgVis';
+import { AlgxAnimator } from './AlgVis';
 
 
 const App: Component = () => {
   let boardSize = 16;
   const [boardState, initBoardState] = createBoardState(boardSize);
-  const aniprop: AniProp = {}
-
   function fxf(){
     if(boardSize !== 16) {
       boardSize = 16;
@@ -36,8 +34,7 @@ const App: Component = () => {
       <button onClick={fxf}> 4x4 </button>
       <button onClick={nxn}> 9x9 </button>
       <PuzzleBoard boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
-      {/* <AlgxAnimator {...aniprop} /> */}
-      <AniButton boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
+      <AlgxAnimator boardState={boardState()} />
     </div>
   );
 };
