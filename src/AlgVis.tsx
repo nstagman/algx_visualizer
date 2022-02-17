@@ -12,30 +12,47 @@ const AlgxAnimator: Component<any> = (props: any): JSXElement => {
   let canvas: any;
   let context: CanvasRenderingContext2D;
   let matrix: AlgXMatrix;
-  let puzzle: Array<number>;
+  
   onMount(() => {
     context = canvas.getContext('2d');
   });
 
-  createEffect(() => {
-    puzzle = [];
+  // createEffect(() => {
+  //   puzzle = [];
+  //   props.boardState.forEach((cell: any) => {
+  //     puzzle.push(cell.getValue());
+  //   });
+  //   matrix = buildMatrix(puzzle, Math.sqrt(puzzle.length));
+  //   console.log(decodeSolution(matrix.algXSearch()));
+  // });
+
+  const solveCB = (event: MouseEvent): void => {
+    let puzzle: Array<number> = [];
     props.boardState.forEach((cell: any) => {
       puzzle.push(cell.getValue());
     });
-    matrix = buildMatrix(puzzle, Math.sqrt(puzzle.length));
+    matrix = buildMatrix(puzzle);
     console.log(decodeSolution(matrix.algXSearch()));
-  });
+  }
 
   const drawNode = (r: number, c: number) => {
     context.fillRect(c*gridSize, r*gridSize, nodeSize, nodeSize)
   }
 
   const drawLink = (r1: number, c1: number, r2: number, c2: number) => {
-    console.log('dl click')
+    console.log('draw link')
+  }
+
+  const removeLink = (r1: number, c1: number, r2: number, c2: number) => {
+    console.log('remove link')
   }
 
   return(
-    <canvas ref={canvas} width={width} height={height}/>
+    <div>
+      <canvas ref={canvas} width={width} height={height}/>
+      <button onClick={solveCB}> solve </button>
+    </div>
+    
   )
 }
 

@@ -255,7 +255,8 @@ const boxConstraint = (row: number, dim: number): number => {
     (((row/(Math.sqrt(dim)*dim))|0) % Math.sqrt(dim)) * dim + (row % dim);
 };
 
-const buildMatrix = (puzzle: Array<number>, dim: number): AlgXMatrix => {
+const buildMatrix = (puzzle: Array<number>): AlgXMatrix => {
+  const dim: number = Math.sqrt(puzzle.length);
   const numRows = dim*dim*dim;
   const numcols = dim*dim*4;
   const matrix = new AlgXMatrix(numRows, numcols);
