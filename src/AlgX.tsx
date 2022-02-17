@@ -1,4 +1,4 @@
-
+import { NodeDrawInfo, LinkDrawInfo, AniCBs } from './AlgVis';
 
 class AlgXNode {
   readonly row: number;
@@ -62,12 +62,14 @@ class AlgXMatrix {
   rows: Array<AlgXNode>;
   cols: Array<AlgXNode>;
   solved: boolean;
+  aniCBs: AniCBs;
 
-  constructor(numRows: number, numCols: number){
+  constructor(numRows: number, numCols: number, aniCBs: AniCBs){
     this.root = new AlgXNode(-1, -1);
     this.rows = []; //header nodes for rows - added for easier reactivity to user modification of the puzzle
     this.cols = []; //header nodes for cols
     this.solved = false;
+    this.aniCBs = aniCBs;
     //instantiate row and col headers for matrix
     for(let i=0; i<numRows; i++) { this.rows.push(new AlgXNode(i, -1)); }
     for(let i=0; i<numCols; i++) { this.cols.push(new AlgXNode(-1, i, 0)); }
@@ -255,13 +257,13 @@ const boxConstraint = (row: number, dim: number): number => {
     (((row/(Math.sqrt(dim)*dim))|0) % Math.sqrt(dim)) * dim + (row % dim);
 };
 
-const buildMatrix = (puzzle: Array<number>): AlgXMatrix => {
+const buildMatrix = (puzzle: Array<number>, aniCBs: AniCBs): AlgXMatrix => {
   const dim: number = Math.sqrt(puzzle.length);
   const numRows = dim*dim*dim;
   const numcols = dim*dim*4;
-  const matrix = new AlgXMatrix(numRows, numcols);
-  puzzle.forEach((cell: number, i: number) => {
-    if(cell === 0){
+  const matrix = new AlgXMatrix(numRows, numcols, aniCBs);
+  puzzle.forEach((squareValue: number, i: number) => {
+    if(squareValue === 0){
       for(let j=0; j<dim; j++){
         let row = i * dim + j;
         const oc = oneConstraint(row, dim);
@@ -272,7 +274,7 @@ const buildMatrix = (puzzle: Array<number>): AlgXMatrix => {
       }
     }
     else{
-      let row = i * dim + cell - 1;
+      let row = i * dim + squareValue - 1;
       const oc = oneConstraint(row, dim);
       const rc = rowConstraint(row, dim);
       const cc = colConstraint(row, dim);
