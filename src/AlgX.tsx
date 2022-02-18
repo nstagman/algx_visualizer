@@ -1,23 +1,24 @@
-import { NodeDrawInfo, LinkDrawInfo, AniCBs } from './AlgVis';
+import { NodeDrawInfo, LinkDrawInfo } from './AlgVis';
+
 
 class AlgXNode {
   readonly row: number;
   readonly col: number;
   count: number;
-  aniRow: number;
-  aniCol: number
   up!: AlgXNode;
   down!: AlgXNode;
   left!: AlgXNode;
   right!: AlgXNode;
+  //track animation properties on the nodes
+  nodeDrawInfo: NodeDrawInfo;
+  linkDrawInfo!: {right: LinkDrawInfo, down: LinkDrawInfo};
 
   //**up, down, left, right fields must be initialized after instantiation */
   constructor(row: number, col: number, count: number = -1){
-      this.row = row;
-      this.col = col;
-      this.count = count;
-      this.aniRow = row;
-      this.aniCol = col;
+    this.row = row;
+    this.col = col;
+    this.count = count;
+    this.nodeDrawInfo = { row: row, col: col };
   }
 
   //Generators to iterate full circle from this node
@@ -62,14 +63,12 @@ class AlgXMatrix {
   rows: Array<AlgXNode>;
   cols: Array<AlgXNode>;
   solved: boolean;
-  aniCBs: AniCBs;
 
-  constructor(numRows: number, numCols: number, aniCBs: AniCBs){
+  constructor(numRows: number, numCols: number){
     this.root = new AlgXNode(-1, -1);
     this.rows = []; //header nodes for rows - added for easier reactivity to user modification of the puzzle
     this.cols = []; //header nodes for cols
     this.solved = false;
-    this.aniCBs = aniCBs;
     //instantiate row and col headers for matrix
     for(let i=0; i<numRows; i++) { this.rows.push(new AlgXNode(i, -1)); }
     for(let i=0; i<numCols; i++) { this.cols.push(new AlgXNode(-1, i, 0)); }
@@ -235,6 +234,83 @@ class AlgXMatrix {
     return solutions;
   }
 
+    //cover a row (partial solution) of the matrix
+  //'removes' the column of each node in rowHead from the matrix
+  //iterate down each 'removed' column and cover each row
+  *animatedCoverPartial(rowHead: AlgXNode): Generator<boolean, void, any> {
+    //for each node in selected row
+    for(const rowNode of rowHead.iterateRight()){
+      //'remove' node's column from matrix
+      let col = this.cols[rowNode.col];
+      col.right.left = col.left;
+      col.left.right = col.right;
+      //iterate down from node's column header
+      for(const colNode of col.iterateDown()){
+        this.coverRow(colNode);
+      }
+    }
+  }
+
+  //iterate right from start node and remove each node from its column
+  *animatedcoverRow(startNode: AlgXNode): Generator<boolean, void, any> {
+    for(const node of startNode.iterateRight()){
+      //'remove' each node from its column
+      node.up.down = node.down;
+      node.down.up = node.up;
+      if(node.col >= 0){ this.cols[node.col].count -= 1; }
+    }
+  }
+
+  //performs the cover function in reverse for specified row
+  //restoring all columns and associated nodes back into the matrix
+  *animatedUncoverPartial(rowHead: AlgXNode): Generator<boolean, void, any> {
+    //for each node in selected row
+    for(const rowNode of rowHead.iterateLeft()){
+      let col = this.cols[rowNode.col];
+      //iterate up from node's column header
+      for(const colNode of col.iterateUp()){
+        this.uncoverRow(colNode);
+      }
+      //'insert' node's column back into matrix
+      col.right.left = col;
+      col.left.right = col;
+    }
+  }
+
+  //iterate left from start node and insert each node back into its column
+  *animatedUncoverRow(startNode: AlgXNode): Generator<boolean, void, any> {
+    for(const node of startNode.iterateLeft()){
+      //'insert' each node back in to its column
+      node.up.down = node;
+      node.down.up = node;
+      if(node.col >= 0){ this.cols[node.col].count += 1; }
+    }
+  }
+
+  *animatedSearch(): Generator<boolean, boolean, any> {
+    //recursive search function
+    if(this.isEmpty()){ //solution exists when matrix is empty
+      this.solved = true;
+      return true;
+    }
+    //select col with minimum nodes to continue search
+    let selCol: AlgXNode = this.selectMinCol();
+    if(selCol.count < 1){ return false; } //this branch has failed
+
+    //iterate down from selected columns
+    for(const vItr of selCol.iterateDown()){
+      this.coverPartialSolution(this.rows[vItr.row]);
+
+      //search again after covering
+      //if solution is found on this branch, leave loop and stop
+      if(this.animatedSearch()){ break; }
+
+      //solution not found on this branch, pop it then uncover the selected partial solution
+      this.uncoverPartialSolution(this.rows[vItr.row]);
+    }
+    return this.solved;
+  }
+
   isEmpty(): boolean {
     return this.root.right === this.root;
   }
@@ -257,11 +333,11 @@ const boxConstraint = (row: number, dim: number): number => {
     (((row/(Math.sqrt(dim)*dim))|0) % Math.sqrt(dim)) * dim + (row % dim);
 };
 
-const buildMatrix = (puzzle: Array<number>, aniCBs: AniCBs): AlgXMatrix => {
+const buildMatrix = (puzzle: Array<number>): AlgXMatrix => {
   const dim: number = Math.sqrt(puzzle.length);
   const numRows = dim*dim*dim;
   const numcols = dim*dim*4;
-  const matrix = new AlgXMatrix(numRows, numcols, aniCBs);
+  const matrix = new AlgXMatrix(numRows, numcols);
   puzzle.forEach((squareValue: number, i: number) => {
     if(squareValue === 0){
       for(let j=0; j<dim; j++){
