@@ -152,15 +152,15 @@ class AlgXMatrix {
   //cover a row (partial solution) of the matrix
   //'removes' the column of each node in rowHead from the matrix
   //iterate down each 'removed' column and cover each row
-  coverPartialSolution(rowHead: AlgXNode): void {
+  coverPartialSolution(selectedRow: AlgXNode): void {
     //for each node in selected row
-    for(const rowNode of rowHead.iterateRight()){
+    for(const node of selectedRow.iterateRight()){
       //'remove' node's column from matrix
-      let col = this.cols[rowNode.col];
-      col.right.left = col.left;
-      col.left.right = col.right;
+      let coverCol = this.cols[node.col];
+      coverCol.right.left = coverCol.left;
+      coverCol.left.right = coverCol.right;
       //iterate down from node's column header
-      for(const colNode of col.iterateDown()){
+      for(const colNode of coverCol.iterateDown()){
         this.coverRow(colNode);
       }
     }
@@ -172,23 +172,24 @@ class AlgXMatrix {
       //'remove' each node from its column
       node.up.down = node.down;
       node.down.up = node.up;
+      //don't attempt to access the row-headers column
       if(node.col >= 0){ this.cols[node.col].count -= 1; }
     }
   }
 
   //performs the cover function in reverse for specified row
   //restoring all columns and associated nodes back into the matrix
-  uncoverPartialSolution(rowHead: AlgXNode): void {
+  uncoverPartialSolution(selectedRow: AlgXNode): void {
     //for each node in selected row
-    for(const rowNode of rowHead.iterateLeft()){
-      let col = this.cols[rowNode.col];
+    for(const node of selectedRow.iterateLeft()){
+      let uncoverCol = this.cols[node.col];
       //iterate up from node's column header
-      for(const colNode of col.iterateUp()){
+      for(const colNode of uncoverCol.iterateUp()){
         this.uncoverRow(colNode);
       }
       //'insert' node's column back into matrix
-      col.right.left = col;
-      col.left.right = col;
+      uncoverCol.right.left = uncoverCol;
+      uncoverCol.left.right = uncoverCol;
     }
   }
 
@@ -198,10 +199,12 @@ class AlgXMatrix {
       //'insert' each node back in to its column
       node.up.down = node;
       node.down.up = node;
+      //don't attempt to access the row-headers column
       if(node.col >= 0){ this.cols[node.col].count += 1; }
     }
   }
 
+  //Perform algorithm X to search for an exact cover of the matrix
   algXSearch(): Array<number> {
     let solutions: Array<number> = []
     //recursive search function
@@ -234,60 +237,9 @@ class AlgXMatrix {
     return solutions;
   }
 
-    //cover a row (partial solution) of the matrix
-  //'removes' the column of each node in rowHead from the matrix
-  //iterate down each 'removed' column and cover each row
-  *animatedCoverPartial(rowHead: AlgXNode): Generator<boolean, void, any> {
-    //for each node in selected row
-    for(const rowNode of rowHead.iterateRight()){
-      //'remove' node's column from matrix
-      let col = this.cols[rowNode.col];
-      col.right.left = col.left;
-      col.left.right = col.right;
-      //iterate down from node's column header
-      for(const colNode of col.iterateDown()){
-        this.coverRow(colNode);
-      }
-    }
-  }
-
-  //iterate right from start node and remove each node from its column
-  *animatedcoverRow(startNode: AlgXNode): Generator<boolean, void, any> {
-    for(const node of startNode.iterateRight()){
-      //'remove' each node from its column
-      node.up.down = node.down;
-      node.down.up = node.up;
-      if(node.col >= 0){ this.cols[node.col].count -= 1; }
-    }
-  }
-
-  //performs the cover function in reverse for specified row
-  //restoring all columns and associated nodes back into the matrix
-  *animatedUncoverPartial(rowHead: AlgXNode): Generator<boolean, void, any> {
-    //for each node in selected row
-    for(const rowNode of rowHead.iterateLeft()){
-      let col = this.cols[rowNode.col];
-      //iterate up from node's column header
-      for(const colNode of col.iterateUp()){
-        this.uncoverRow(colNode);
-      }
-      //'insert' node's column back into matrix
-      col.right.left = col;
-      col.left.right = col;
-    }
-  }
-
-  //iterate left from start node and insert each node back into its column
-  *animatedUncoverRow(startNode: AlgXNode): Generator<boolean, void, any> {
-    for(const node of startNode.iterateLeft()){
-      //'insert' each node back in to its column
-      node.up.down = node;
-      node.down.up = node;
-      if(node.col >= 0){ this.cols[node.col].count += 1; }
-    }
-  }
-
-  *animatedSearch(): Generator<boolean, boolean, any> {
+  //algorithm X search as a generator to hook into the animator
+  //all cover/uncover functions are inlined in this generator to give granular control of the animation
+  *animatedAlgXSearch(): Generator<boolean, boolean, any> {
     //recursive search function
     if(this.isEmpty()){ //solution exists when matrix is empty
       this.solved = true;
@@ -298,15 +250,50 @@ class AlgXMatrix {
     if(selCol.count < 1){ return false; } //this branch has failed
 
     //iterate down from selected columns
-    for(const vItr of selCol.iterateDown()){
-      this.coverPartialSolution(this.rows[vItr.row]);
+    for(const solSearchNode of selCol.iterateDown()){
+      // -- Cover Partial Solution
+      //for each node in selected row
+      for(const node of this.rows[solSearchNode.row].iterateRight()){
+        //cover each nodes column - 'remove' node's column from matrix
+        let coverCol = this.cols[node.col];
+        coverCol.right.left = coverCol.left;
+        coverCol.left.right = coverCol.right;
+        //iterate down from covered column header
+        for(const coverColNode of coverCol.iterateDown()){
+          //cover each row
+          for(const coverRowNode of coverColNode.iterateRight()){
+            //'remove' each node from its column
+            coverRowNode.up.down = coverRowNode.down;
+            coverRowNode.down.up = coverRowNode.up;
+            //don't attempt to access the row-headers column
+            if(coverRowNode.col >= 0){ this.cols[coverRowNode.col].count -= 1; }
+          }
+        }
+      }
 
       //search again after covering
       //if solution is found on this branch, leave loop and stop
-      if(this.animatedSearch()){ break; }
+      if(this.animatedAlgXSearch()){ break; }
 
-      //solution not found on this branch, pop it then uncover the selected partial solution
-      this.uncoverPartialSolution(this.rows[vItr.row]);
+      // -- Uncover Partial Solution
+      //for each node in selected row
+      for(const node of this.rows[solSearchNode.row].iterateLeft()){
+        let uncoverCol = this.cols[node.col];
+        //iterate up from column header
+        for(const colNode of uncoverCol.iterateUp()){
+          //uncover each row
+          for(const node of colNode.iterateLeft()){
+            //'insert' each node back in to its column
+            node.up.down = node;
+            node.down.up = node;
+            //don't attempt to access the row-headers column
+            if(node.col >= 0){ this.cols[node.col].count += 1; }
+          }
+        }
+        //'insert' node's column back into matrix
+        uncoverCol.right.left = uncoverCol;
+        uncoverCol.left.right = uncoverCol;
+      }
     }
     return this.solved;
   }
