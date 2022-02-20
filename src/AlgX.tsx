@@ -63,12 +63,14 @@ class AlgXMatrix {
   rows: Array<AlgXNode>;
   cols: Array<AlgXNode>;
   solved: boolean;
+  solution: Array<number>;
 
   constructor(numRows: number, numCols: number){
     this.root = new AlgXNode(-1, -1);
     this.rows = []; //header nodes for rows - added for easier reactivity to user modification of the puzzle
     this.cols = []; //header nodes for cols
     this.solved = false;
+    this.solution = [];
     //instantiate row and col headers for matrix
     for(let i=0; i<numRows; i++) { this.rows.push(new AlgXNode(i, -1)); }
     for(let i=0; i<numCols; i++) { this.cols.push(new AlgXNode(-1, i, 0)); }
@@ -101,6 +103,7 @@ class AlgXMatrix {
     cols.forEach((col: number) => {
       let newNode: AlgXNode = new AlgXNode(row, col);
       let itrNode: AlgXNode = this.cols[col];
+      //search down from col header to find row
       for(const n of this.cols[col].iterateDown(false)){
         if(n.down.row === -1 || n.down.row > row){
           itrNode = n;
@@ -130,6 +133,9 @@ class AlgXMatrix {
       n.up.down = n.down;
       n.down.up = n.up;
       this.cols[n.col].count -= 1;
+      n.left.right = this.rows[row];
+      n.left = this.rows[row];
+      
     }
     this.rows[row].right = this.rows[row];
     this.rows[row].left = this.rows[row];
@@ -239,7 +245,7 @@ class AlgXMatrix {
 
   //algorithm X search as a generator to hook into the animator
   //all cover/uncover functions are inlined in this generator to give granular control of the animation
-  *animatedAlgXSearch(): Generator<boolean, boolean, any> {
+  *animatedAlgXSearch(): Generator<Array<number>, boolean, any> {
     //recursive search function
     if(this.isEmpty()){ //solution exists when matrix is empty
       this.solved = true;
@@ -251,6 +257,9 @@ class AlgXMatrix {
 
     //iterate down from selected columns
     for(const solSearchNode of selCol.iterateDown()){
+      this.solution.push(solSearchNode.row);
+      yield this.solution;
+
       // -- Cover Partial Solution
       //for each node in selected row
       for(const node of this.rows[solSearchNode.row].iterateRight()){
@@ -273,10 +282,14 @@ class AlgXMatrix {
 
       //search again after covering
       //if solution is found on this branch, leave loop and stop
-      if(this.animatedAlgXSearch()){ break; }
+      for(const y of this.animatedAlgXSearch()){
+        yield y;
+      }
+      if(this.solved){ break; }
 
       // -- Uncover Partial Solution
       //for each node in selected row
+      this.solution.pop();
       for(const node of this.rows[solSearchNode.row].iterateLeft()){
         let uncoverCol = this.cols[node.col];
         //iterate up from column header

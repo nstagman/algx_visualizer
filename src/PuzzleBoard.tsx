@@ -16,7 +16,7 @@ function _initBoardState(size: number) {
     const [g, s] = createSignal(0);
     puzzleBoardState.push({squareNum: i, getValue: g, setValue: s});
   }
-  return puzzleBoardState
+  return puzzleBoardState;
 }
 
 /**Returns getter, setter functions for getting and creating a new PuzzleBoard boardState prop (PuzzleSquareState[])*/
@@ -46,7 +46,7 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
     else if(event.key === 'Delete' || event.key === 'Backspace'){
       props.setValue(0); //no number is represented with a value of 0
     }
-  }
+  };
 
   return(
     <div
