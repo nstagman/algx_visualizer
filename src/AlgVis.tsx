@@ -7,17 +7,18 @@ type NodeDrawInfo = { row: number, col: number }
 type LinkDrawInfo = { props?: any}
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
-  const nodeSize = 7;
-  const linkLen = 8;
+  const nodeSize = 5;
+  const linkLen = nodeSize + 1;
   const gridSize = nodeSize + linkLen
-  const width = 16 * 4 * gridSize;
-  const height = 16 * 4 * gridSize;
+  const width = 16 * 4 * gridSize + 2 * gridSize;
+  const height = 16 * 4 * gridSize + 2 * gridSize;
   let canvas: any;
   let context: CanvasRenderingContext2D;
   let matrix: AlgXMatrix;
 
   onMount(() => {
     context = canvas.getContext('2d');
+    context.translate(2*gridSize, 2*gridSize);
   });
 
   const nodeCenter = (node: NodeDrawInfo): [number, number] => {
@@ -29,15 +30,16 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   const drawLink = (n1: NodeDrawInfo, n2: NodeDrawInfo) => {
+    context.beginPath();
     context.moveTo(...nodeCenter(n1));
     context.lineTo(...nodeCenter(n2));
-    context.stroke();
+    context.stroke()
   };
 
   const drawMatrix = () => {
-    context.clearRect(0, 0, width, height);
-    for(const col of matrix.root.iterateRight()){
-      for(const node of col.iterateDown()){
+    context.clearRect(-2*gridSize, -2*gridSize, width, height);
+    for(const col of matrix.root.iterateRight(false)){
+      for(const node of col.iterateDown(false)){
         drawNode(node.nodeDrawInfo);
         if(node.right.col >= 0){ drawLink(node.nodeDrawInfo, node.right.nodeDrawInfo); }
         if(node.down.col >= 0){ drawLink(node.nodeDrawInfo, node.down.nodeDrawInfo); }
@@ -50,26 +52,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     props.boardState.forEach((cell: any) => {
       puzzle.push(cell.getValue());
     });
-    console.log(puzzle.length)
     matrix = buildMatrix(puzzle);
-    drawMatrix()
-    await new Promise(r => setTimeout(r, 250));
-    drawMatrix()
-    await new Promise(r => setTimeout(r, 250));
-    drawMatrix()
-    await new Promise(r => setTimeout(r, 250));
-    drawMatrix()
-    await new Promise(r => setTimeout(r, 250));
-    drawMatrix()
-    await new Promise(r => setTimeout(r, 250));
-    drawMatrix()
-    await new Promise(r => setTimeout(r, 250));
-    // for(const update of matrix.animatedAlgXSearch()){
-    //   drawMatrix();
-    //   // await new Promise(r => setTimeout(r, 250));
-    // }
-    console.log(decodeSolution(matrix.algXSearch()));
-    // drawMatrix();
+    for(const update of matrix.animatedAlgXSearch()){
+      drawMatrix();
+      await new Promise(r => setTimeout(r, 500));
+    }
+    drawMatrix();
+    // console.log(decodeSolution(matrix.algXSearch()))
   };
 
   return(
