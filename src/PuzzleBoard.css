@@ -1,6 +1,6 @@
 .PuzzleBoard {
     display: grid;
-    margin: 2rem;
+    margin: 1rem;
     padding: 2px 1px 1px 2px;
     width: fit-content;
     background-color: black;

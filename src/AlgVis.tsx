@@ -1,50 +1,81 @@
 import './AlgVis.css'
-import { AlgXMatrix, buildMatrix, decodeSolution } from './AlgX';
-import { JSXElement, Component, createEffect, onMount } from 'solid-js';
+import { AlgXMatrix, buildSudMatrix, buildTest, decodeSolution } from './AlgX';
+import { JSXElement, Component, createSignal, createEffect, onMount } from 'solid-js';
 
 
-type NodeDrawInfo = { row: number, col: number }
-type LinkDrawInfo = { props?: any}
+type NodeDrawInfo = { row: number, col: number, focused: boolean }
+type LinkDrawInfo = { animating: boolean, reverse: boolean, draw: boolean, pct: number, start?: Date }
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
-  const nodeSize = 5;
-  const linkLen = nodeSize + 1;
+  //hardcoded vars for visualization size
+  const nodeSize = 9;
+  const linkLen = nodeSize*3;
   const gridSize = nodeSize + linkLen
-  const width = 16 * 4 * gridSize + 2 * gridSize;
-  const height = 16 * 4 * gridSize + 2 * gridSize;
+  //solidjs reactive signals to update size of canvas
+  const [getWidth, setWidth] = createSignal(0);
+  const [getHeight, setHeight] = createSignal(0);
   let canvas: any;
   let context: CanvasRenderingContext2D;
-  let matrix: AlgXMatrix;
+  let animationComplete: Promise<boolean>;
 
-  onMount(() => {
-    context = canvas.getContext('2d');
-    context.translate(2*gridSize, 2*gridSize);
+  //testing only - getMatrix needs to be passed in as a prop from the user interactive portion
+  const [getMatrix, setMatrix] = createSignal(buildTest());
+
+  //solidjs effect - this causes initCanvas to run anytime a signal used by initCanvas (getMatrix) changes
+  createEffect(() => {
+    initCanvas();
   });
 
+  //solidjs built-in effect, runs one-time after the first render
+  onMount(() => {
+    initCanvas();
+    context = canvas.getContext('2d');
+    animateMatrix();
+  });
+
+  //reactively set canvas size based on matrix size
+  const initCanvas = (): void => {
+    setWidth(gridSize * getMatrix().cols.length + gridSize*2);
+    setHeight(gridSize * getMatrix().rows.length + gridSize*2);
+  };
+
+  //animation loop - draws the matrix on the canvas
+  const animateMatrix = (): void => {
+    drawMatrix();
+    requestAnimationFrame(animateMatrix);
+  };
+
+  //translates matrix position to a tuple of coordinates for the center of a node
   const nodeCenter = (node: NodeDrawInfo): [number, number] => {
     return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize/2];
   };
   
-  const drawNode = (node: NodeDrawInfo) => {
+  const drawNode = (node: NodeDrawInfo):void => {
+    // context.beginPath();
+    // context.arc(node.col * gridSize +nodeSize/2, node.row * gridSize + nodeSize/2, nodeSize, 0, 2*Math.PI);
+    // context.stroke();
     context.fillRect(node.col * gridSize, node.row * gridSize, nodeSize, nodeSize);
   };
 
-  const drawLink = (n1: NodeDrawInfo, n2: NodeDrawInfo) => {
+  const drawLink = (n1: NodeDrawInfo, n2: NodeDrawInfo):void => {
     context.beginPath();
     context.moveTo(...nodeCenter(n1));
     context.lineTo(...nodeCenter(n2));
     context.stroke()
   };
 
-  const drawMatrix = () => {
-    context.clearRect(-2*gridSize, -2*gridSize, width, height);
-    for(const col of matrix.root.iterateRight(false)){
+  const drawMatrix = (): void => {
+    context.clearRect(0, 0, getWidth(), getHeight());
+    context.save()
+    context.translate(2*gridSize, 2*gridSize);
+    for(const col of getMatrix().root.iterateRight(false)){
       for(const node of col.iterateDown(false)){
-        drawNode(node.nodeDrawInfo);
-        if(node.right.col >= 0){ drawLink(node.nodeDrawInfo, node.right.nodeDrawInfo); }
-        if(node.down.col >= 0){ drawLink(node.nodeDrawInfo, node.down.nodeDrawInfo); }
+        drawNode(node.nodeInfo);
+        if(node.right.col >= 0){ drawLink(node.nodeInfo, node.right.nodeInfo); }
+        if(node.down.col >= 0){ drawLink(node.nodeInfo, node.down.nodeInfo); }
       }
     }
+    context.restore();
   };
 
    const solveCB = async (event: MouseEvent): Promise<void> => {
@@ -52,19 +83,26 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     props.boardState.forEach((cell: any) => {
       puzzle.push(cell.getValue());
     });
-    matrix = buildMatrix(puzzle);
-    for(const update of matrix.animatedAlgXSearch()){
-      drawMatrix();
-      await new Promise(r => setTimeout(r, 500));
+    setMatrix(buildSudMatrix(puzzle));
+    for(const update of getMatrix().animatedAlgXSearch()){
+      await new Promise(r => setTimeout(r, 50));
     }
-    drawMatrix();
-    // console.log(decodeSolution(matrix.algXSearch()))
+  };
+
+  const testCB = async (event: MouseEvent): Promise<void> => {
+    setMatrix(buildTest());
+    for(const update of getMatrix().animatedAlgXSearch()){
+      await new Promise(r => setTimeout(r, 250));
+    }
   };
 
   return(
     <div>
-      <canvas ref={canvas} width={width} height={height}/>
-      <button onClick={solveCB}> solve </button>
+      <div>
+        <button onClick={solveCB}> solve </button>
+        <button onClick={testCB}> test </button>
+      </div>
+      <canvas ref={canvas} width={getWidth()} height={getHeight()}/>
     </div>
   );
 }
