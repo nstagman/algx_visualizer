@@ -344,7 +344,7 @@ class AlgXMatrix {
             node.down.linkInfo.up.reverse = true;
             node.down.linkInfo.up.pct = 0;
             yield;
-            //update animation info for relinking the links
+            //update animation info for relinking newly assigned links
             node.up.down = node.down;
             node.down.up = node.up;
             node.up.linkInfo.down.animating = true;
@@ -377,10 +377,12 @@ class AlgXMatrix {
           //uncover each row
           for(const node of colNode.iterateLeft(false)){
             //'insert' each node back in to its column
+            //update animation for unlinking links
             node.up.linkInfo.down.animating = true;
             node.up.linkInfo.down.reverse = true;
             node.up.linkInfo.down.pct = 0;
             yield;
+            //update animation info for relinking newly assigned links
             node.up.down = node;
             node.down.up = node;
             node.up.linkInfo.down.animating = true;
@@ -393,6 +395,7 @@ class AlgXMatrix {
             //don't attempt to access the row-headers column
             if(node.col >= 0){ this.cols[node.col].count += 1; }
             yield;
+            //let the links be drawn since we are now doubly linked again
             node.linkInfo.up.draw = true;
             node.linkInfo.down.draw = true;
           }
