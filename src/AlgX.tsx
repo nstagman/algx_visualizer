@@ -18,18 +18,18 @@ class AlgXNode {
     this.row = row;
     this.col = col;
     this.count = count;
-    this.nodeInfo = { row: row, col: col, focused: false };
+    this.nodeInfo = { row: row, col: col, focused: false, covered: false, solution: false };
     this.linkInfo = {
-      up: this.getInitLinkInfo(),
-      down: this.getInitLinkInfo(),
-      left: this.getInitLinkInfo(),
-      right: this.getInitLinkInfo()
+      up: this.getInitLinkInfo('up'),
+      down: this.getInitLinkInfo('down'),
+      left: this.getInitLinkInfo('left'),
+      right: this.getInitLinkInfo('right')
     };
   }
 
   //returns initialized link animation info that represents a static fully drawn link
-  getInitLinkInfo(): LinkDrawInfo {
-    return { animating: false, reverse: false, draw: true, pct: 100, start: undefined }
+  getInitLinkInfo(dir: 'up' | 'down' | 'left' | 'right'): LinkDrawInfo {
+    return { dir: dir, animating: false, reverse: false, draw: true, pct: 100, start: undefined }
   }
 
   //Generators to iterate full circle from this node
@@ -75,6 +75,8 @@ class AlgXMatrix {
   cols: Array<AlgXNode>;
   solved: boolean;
   solution: Array<number>;
+  focusedNode: AlgXNode;
+  focusedCol?: number;
 
   constructor(numRows: number, numCols: number){
     this.root = new AlgXNode(-1, -1);
@@ -82,27 +84,42 @@ class AlgXMatrix {
     this.cols = []; //header nodes for cols
     this.solved = false;
     this.solution = [];
+    this.focusedNode = this.root;
     //instantiate row and col headers for matrix
     for(let i=0; i<numRows; i++) { this.rows.push(new AlgXNode(i, -1)); }
     for(let i=0; i<numCols; i++) { this.cols.push(new AlgXNode(-1, i, 0)); }
     //initialize links for row and col headers
-    this.rows.forEach((node: AlgXNode, i: number) => {
+    for(const [i, node] of this.rows.entries()){
       node.right = node;
       node.left = node;
       node.down = i < this.rows.length - 1 ? this.rows[i+1] : this.root;
       node.up = i > 0 ? this.rows[i-1] : this.root;
-    });
-    this.cols.forEach((node: AlgXNode, i: number) => {
+    }
+    for(const [i, node] of this.cols.entries()){
       node.up = node;
       node.down = node;
       node.right = i < this.cols.length - 1 ? this.cols[i+1] : this.root;
       node.left = i > 0 ? this.cols[i-1] : this.root;
-    });
+    }
     //initialize links for root
     this.root.right = this.cols[0];
     this.root.left = this.cols[this.cols.length-1];
     this.root.down = this.rows[0];
     this.root.up = this.rows[this.rows.length-1];
+  }
+
+  //iterate over every node in the matrix (left-to-right, top-to-bottom) and apply function fn to each node
+  allNodeMap(fn: (node: AlgXNode) => any): any {
+    let rval = fn(this.root);
+    for(const col of this.cols) {
+      rval ||= fn(col);
+    }
+    for(const row of this.rows){
+      for(const node of row.iterateRight(false)){
+        rval ||= fn(node);
+      }
+    }
+    return rval;
   }
 
   //returns whether the matrix is empty
@@ -118,7 +135,7 @@ class AlgXMatrix {
     if(this.rows[row].right !== this.rows[row]){ return; }
     let newRow: Array<AlgXNode> = [];
     //create new nodes for each pair of coords assign up and down links
-    cols.forEach((col: number) => {
+    for(const col of cols){
       let newNode: AlgXNode = new AlgXNode(row, col);
       let itrNode: AlgXNode = this.cols[col];
       //search down from col header to find row
@@ -134,12 +151,11 @@ class AlgXMatrix {
       itrNode.down = newNode;
       this.cols[col].count += 1;
       newRow.push(newNode);
-    });
-    //iterate through new row and set left and right links
-    newRow.forEach((node: AlgXNode, i: number) => {
+    }
+    for(const [i, node] of newRow.entries()){
       node.right = i < newRow.length - 1 ? newRow[i+1] : this.rows[node.row];
       node.left = i > 0 ? newRow[i-1] : this.rows[node.row];
-    });
+    }
     //set left and right links of row header
     this.rows[newRow[0].row].right = newRow[0];
     this.rows[newRow[0].row].left = newRow[newRow.length-1];
@@ -311,7 +327,9 @@ class AlgXMatrix {
 
   //algorithm X search as a generator to hook into the animator
   //all cover/uncover functions are inlined in this generator to give granular control of the animation
-  *animatedAlgXSearch(): Generator<any, boolean, any> {
+  //yeilding 0 defers resumption of this search to the animator
+  //yielding a non zero value specifies a percentage of time that should be awaited before resumption
+  *animatedAlgXSearch(): Generator<number, boolean, any> {
     //recursive search function
     if(this.isEmpty()){ //solution exists when matrix is empty
       this.solved = true;
@@ -330,35 +348,43 @@ class AlgXMatrix {
       for(const node of solSearchNode.iterateRight(false)){
         if(node.col < 0){ continue; }
         let coverCol = this.cols[node.col];
+        //cover each nodes column - 'remove' node's column from matrix
+        this.focusNode(coverCol);
+        coverCol.linkInfo.left.draw = false;
+        coverCol.linkInfo.right.draw = false;
+        this.unlinkAniUpdate(coverCol.left.linkInfo.right);
+        this.unlinkAniUpdate(coverCol.right.linkInfo.left);
+        yield 0;
+        coverCol.right.left = coverCol.left;
+        coverCol.left.right = coverCol.right;
+        this.relinkAniUpdate(coverCol.left.linkInfo.right);
+        coverCol.right.linkInfo.left.draw = false;
+        coverCol.nodeInfo.covered = true;
+        yield 0;
+        this.focusNode(coverCol.down);
+        coverCol.down.nodeInfo.covered = true;
+        yield 100;
         //iterate down from covered column header
-        for(const coverColNode of coverCol.iterateDown()){
+        for(const colNode of coverCol.iterateDown()){
           //cover each row
-          for(const node of coverColNode.iterateRight()){
+          for(const node of colNode.iterateRight()){
             //update animation info for unlinking the links
+            this.focusNode(node);
             node.linkInfo.up.draw = false;
             node.linkInfo.down.draw = false;
-            node.up.linkInfo.down.animating = true;
-            node.up.linkInfo.down.reverse = true;
-            node.up.linkInfo.down.pct = 0;
-            node.down.linkInfo.up.animating = true;
-            node.down.linkInfo.up.reverse = true;
-            node.down.linkInfo.up.pct = 0;
-            yield;
+            this.unlinkAniUpdate(node.up.linkInfo.down);
+            this.unlinkAniUpdate(node.down.linkInfo.up);
+            yield 0;
             //update animation info for relinking newly assigned links
             node.up.down = node.down;
             node.down.up = node.up;
-            node.up.linkInfo.down.animating = true;
-            node.up.linkInfo.down.reverse = false;
-            node.up.linkInfo.down.pct = 0;
+            this.relinkAniUpdate(node.up.linkInfo.down);
             node.down.linkInfo.up.draw = false;
             //don't attempt to access the row-headers column
             if(node.col >= 0){ this.cols[node.col].count -= 1; }
-            yield;
+            yield 0;
           }
         }
-        //cover each nodes column - 'remove' node's column from matrix
-        coverCol.right.left = coverCol.left;
-        coverCol.left.right = coverCol.right;
       }
 
       //search again after covering
@@ -369,43 +395,68 @@ class AlgXMatrix {
       // -- Uncover Partial Solution
       //for each node in selected row
       this.solution.pop();
-      for(const node of solSearchNode.iterateLeft()){
+      for(const node of solSearchNode.iterateLeft(false)){
         if(node.col < 0){ continue; }
         let uncoverCol = this.cols[node.col];
         //iterate up from column header
         for(const colNode of uncoverCol.iterateUp()){
           //uncover each row
-          for(const node of colNode.iterateLeft(false)){
+          for(const node of colNode.iterateLeft()){
             //'insert' each node back in to its column
             //update animation for unlinking links
-            node.up.linkInfo.down.animating = true;
-            node.up.linkInfo.down.reverse = true;
-            node.up.linkInfo.down.pct = 0;
-            yield;
+            this.focusNode(node);
+            this.unlinkAniUpdate(node.up.linkInfo.down);
+            yield 0;
             //update animation info for relinking newly assigned links
             node.up.down = node;
             node.down.up = node;
-            node.up.linkInfo.down.animating = true;
-            node.up.linkInfo.down.reverse = false;
-            node.up.linkInfo.down.pct = 0;
-            node.down.linkInfo.up.animating = true;
-            node.down.linkInfo.up.reverse = false;
-            node.down.linkInfo.up.pct = 0;
-            node.down.linkInfo.up.draw = true;
+            this.relinkAniUpdate(node.up.linkInfo.down);
+            this.relinkAniUpdate(node.down.linkInfo.up);
             //don't attempt to access the row-headers column
             if(node.col >= 0){ this.cols[node.col].count += 1; }
-            yield;
+            yield 0;
             //let the links be drawn since we are now doubly linked again
             node.linkInfo.up.draw = true;
             node.linkInfo.down.draw = true;
           }
         }
         //'insert' node's column back into matrix
+        this.focusNode(uncoverCol);
+        this.unlinkAniUpdate(uncoverCol.left.linkInfo.right);
+        yield 0;
         uncoverCol.right.left = uncoverCol;
         uncoverCol.left.right = uncoverCol;
+        this.relinkAniUpdate(uncoverCol.left.linkInfo.right);
+        this.relinkAniUpdate(uncoverCol.right.linkInfo.left);
+        yield 0;
+        uncoverCol.linkInfo.left.draw = true;
+        uncoverCol.linkInfo.right.draw = true;
       }
     }
     return this.solved;
+  }
+
+  //updates link animation info for unlinking a specified link
+  unlinkAniUpdate(link: LinkDrawInfo): void{
+    link.draw = true;
+    link.animating = true;
+    link.reverse = true;
+    link.pct = 100;
+  }
+
+  //updates link animation info for relinking a specified link
+  relinkAniUpdate(link: LinkDrawInfo): void{
+    link.draw = true;
+    link.animating = true;
+    link.reverse = false;
+    link.pct = 0;
+  }
+
+  //sets the specified node to be focused
+  focusNode(node: AlgXNode): void {
+    this.focusedNode.nodeInfo.focused = false;
+    this.focusedNode = node;
+    node.nodeInfo.focused = true;
   }
 }
 
@@ -458,7 +509,7 @@ const buildSudMatrix = (puzzle: Array<number>): AlgXMatrix => {
   const numRows = dim*dim*dim;
   const numcols = dim*dim*4;
   const matrix = new AlgXMatrix(numRows, numcols);
-  puzzle.forEach((squareValue: number, i: number) => {
+  for(const [i, squareValue] of puzzle.entries()){
     if(squareValue === 0){
       for(let j=0; j<dim; j++){
         let row = i * dim + j;
@@ -477,7 +528,7 @@ const buildSudMatrix = (puzzle: Array<number>): AlgXMatrix => {
       const bc = boxConstraint(row, dim);
       matrix.insertRow(row, [oc, rc, cc, bc]);
     }
-  });
+  }
   return matrix;
 };
 
@@ -485,11 +536,11 @@ const decodeSolution = (solution: Array<number>): Array<number> => {
   let solvedPuzzle: Array<number> = [];
   const dim = Math.sqrt(solution.length);
   for(let i=0; i< solution.length; i++){ solvedPuzzle.push(0); }
-  solution.forEach((row: number) => {
+  for(const row of solution){
     solvedPuzzle[(row/dim)|0] = (row % dim) + 1
-  });
+  }
   return solvedPuzzle;
 };
 //#endregion
 
-export { AlgXMatrix, buildSudMatrix, buildTest, decodeSolution }
+export { AlgXMatrix, AlgXNode, buildSudMatrix, buildTest, decodeSolution }

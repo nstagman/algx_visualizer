@@ -23,9 +23,9 @@ const App: Component = () => {
 
   function printVals(){
     const boardVals: Array<number> = [];
-    boardState().forEach(squareState => {
+    for(const squareState of boardState()){
       boardVals.push(squareState.getValue());
-    });
+    }
     console.log(boardVals);
   }
 
