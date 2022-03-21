@@ -19,8 +19,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const lineWidth = 1;
   const linkLen = nodeSize*3;
   const gridSize = nodeSize + linkLen
-  const animationStep = 20;
-  const animationAwaitTime = animationStep * 5;
+  const animationStep = 10;
+  const animationAwaitTime = 2500/animationStep;
   //component state and reference variables
   let canvas: any;
   let context: CanvasRenderingContext2D;
@@ -93,7 +93,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   const drawNode = (node: NodeDrawInfo):void => {
-    context.fillStyle = !node.focused ? '#000000' : '#FFFF00';
+    context.fillStyle = '#000000';
+    if(node.covered){ context.fillStyle = '#CCCCCC'; }
+    if(node.focused) { context.fillStyle = '#FFFF00'; }
     context.beginPath();
     context.arc(node.col * gridSize + nodeSize/2, node.row * gridSize + nodeSize/2, nodeSize/2, 0, 2*Math.PI);
     context.fill();
@@ -251,7 +253,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const testCB = async (event: MouseEvent): Promise<void> => {
     setMatrix(buildTest());
     for(const update of getMatrix().animatedAlgXSearch()){
-      if(update === 0){ //no timeout specified - wait for animator to finish this step
+      if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
         animationComplete = null;
       }

@@ -342,9 +342,9 @@ class AlgXMatrix {
     //iterate down from selected columns
     for(const solSearchNode of selCol.iterateDown()){
       this.solution.push(solSearchNode.row);
-
       // -- Cover Partial Solution
       //for each node in selected row
+      console.log('cover ' + solSearchNode.col + ' ' + solSearchNode.row)
       for(const node of solSearchNode.iterateRight(false)){
         if(node.col < 0){ continue; }
         let coverCol = this.cols[node.col];
@@ -361,27 +361,28 @@ class AlgXMatrix {
         coverCol.right.linkInfo.left.draw = false;
         coverCol.nodeInfo.covered = true;
         yield 0;
-        this.focusNode(coverCol.down);
-        coverCol.down.nodeInfo.covered = true;
-        yield 100;
         //iterate down from covered column header
         for(const colNode of coverCol.iterateDown()){
+          this.focusNode(colNode);
+          colNode.nodeInfo.covered = true;
+          yield 100;
           //cover each row
-          for(const node of colNode.iterateRight()){
+          for(const rowNode of colNode.iterateRight()){
             //update animation info for unlinking the links
-            this.focusNode(node);
-            node.linkInfo.up.draw = false;
-            node.linkInfo.down.draw = false;
-            this.unlinkAniUpdate(node.up.linkInfo.down);
-            this.unlinkAniUpdate(node.down.linkInfo.up);
+            this.focusNode(rowNode);
+            rowNode.linkInfo.up.draw = false;
+            rowNode.linkInfo.down.draw = false;
+            this.unlinkAniUpdate(rowNode.up.linkInfo.down);
+            this.unlinkAniUpdate(rowNode.down.linkInfo.up);
             yield 0;
             //update animation info for relinking newly assigned links
-            node.up.down = node.down;
-            node.down.up = node.up;
-            this.relinkAniUpdate(node.up.linkInfo.down);
-            node.down.linkInfo.up.draw = false;
+            rowNode.up.down = rowNode.down;
+            rowNode.down.up = rowNode.up;
+            this.relinkAniUpdate(rowNode.up.linkInfo.down);
+            rowNode.down.linkInfo.up.draw = false;
+            rowNode.nodeInfo.covered = true;
             //don't attempt to access the row-headers column
-            if(node.col >= 0){ this.cols[node.col].count -= 1; }
+            if(rowNode.col >= 0){ this.cols[rowNode.col].count -= 1; }
             yield 0;
           }
         }
@@ -395,31 +396,10 @@ class AlgXMatrix {
       // -- Uncover Partial Solution
       //for each node in selected row
       this.solution.pop();
-      for(const node of solSearchNode.iterateLeft(false)){
+      console.log('uncover ' + solSearchNode.col + ' ' + solSearchNode.row)
+      for(const node of solSearchNode.iterateLeft()){
         if(node.col < 0){ continue; }
         let uncoverCol = this.cols[node.col];
-        //iterate up from column header
-        for(const colNode of uncoverCol.iterateUp()){
-          //uncover each row
-          for(const node of colNode.iterateLeft()){
-            //'insert' each node back in to its column
-            //update animation for unlinking links
-            this.focusNode(node);
-            this.unlinkAniUpdate(node.up.linkInfo.down);
-            yield 0;
-            //update animation info for relinking newly assigned links
-            node.up.down = node;
-            node.down.up = node;
-            this.relinkAniUpdate(node.up.linkInfo.down);
-            this.relinkAniUpdate(node.down.linkInfo.up);
-            //don't attempt to access the row-headers column
-            if(node.col >= 0){ this.cols[node.col].count += 1; }
-            yield 0;
-            //let the links be drawn since we are now doubly linked again
-            node.linkInfo.up.draw = true;
-            node.linkInfo.down.draw = true;
-          }
-        }
         //'insert' node's column back into matrix
         this.focusNode(uncoverCol);
         this.unlinkAniUpdate(uncoverCol.left.linkInfo.right);
@@ -428,11 +408,40 @@ class AlgXMatrix {
         uncoverCol.left.right = uncoverCol;
         this.relinkAniUpdate(uncoverCol.left.linkInfo.right);
         this.relinkAniUpdate(uncoverCol.right.linkInfo.left);
+        uncoverCol.nodeInfo.covered = false;
         yield 0;
         uncoverCol.linkInfo.left.draw = true;
         uncoverCol.linkInfo.right.draw = true;
+        //iterate up from column header
+        for(const colNode of uncoverCol.iterateUp()){
+          this.focusNode(colNode);
+          colNode.nodeInfo.covered = false;
+          yield 100;
+          //uncover each row
+          for(const rowNode of colNode.iterateLeft(false)){
+            //'insert' each node back in to its column
+            //update animation for unlinking links
+            this.focusNode(rowNode);
+            this.unlinkAniUpdate(rowNode.up.linkInfo.down);
+            yield 0;
+            //update animation info for relinking newly assigned links
+            rowNode.up.down = rowNode;
+            rowNode.down.up = rowNode;
+            this.relinkAniUpdate(rowNode.up.linkInfo.down);
+            this.relinkAniUpdate(rowNode.down.linkInfo.up);
+            rowNode.nodeInfo.covered = false;
+            //don't attempt to access the row-headers column
+            if(rowNode.col >= 0){ this.cols[rowNode.col].count += 1; }
+            yield 0;
+            //let the links be drawn since we are now doubly linked again
+            rowNode.linkInfo.up.draw = true;
+            rowNode.linkInfo.down.draw = true;
+          }
+        }
+
       }
     }
+    this.focusNode(this.root)
     return this.solved;
   }
 
