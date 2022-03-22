@@ -397,7 +397,7 @@ class AlgXMatrix {
       //for each node in selected row
       this.solution.pop();
       console.log('uncover ' + solSearchNode.col + ' ' + solSearchNode.row)
-      for(const node of solSearchNode.iterateLeft()){
+      for(const node of solSearchNode.left.iterateLeft(false)){
         if(node.col < 0){ continue; }
         let uncoverCol = this.cols[node.col];
         //'insert' node's column back into matrix
@@ -418,7 +418,7 @@ class AlgXMatrix {
           colNode.nodeInfo.covered = false;
           yield 100;
           //uncover each row
-          for(const rowNode of colNode.iterateLeft(false)){
+          for(const rowNode of colNode.iterateLeft()){
             //'insert' each node back in to its column
             //update animation for unlinking links
             this.focusNode(rowNode);
@@ -438,7 +438,6 @@ class AlgXMatrix {
             rowNode.linkInfo.down.draw = true;
           }
         }
-
       }
     }
     this.focusNode(this.root)
