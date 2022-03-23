@@ -19,7 +19,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const lineWidth = 1;
   const linkLen = nodeSize*3;
   const gridSize = nodeSize + linkLen
-  const animationStep = 10;
+  const animationStep = 1;
   const animationAwaitTime = 2500/animationStep;
   //component state and reference variables
   let canvas: any;
@@ -149,21 +149,29 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
           const top: [number, number] = nodeTop(n1);
           context.moveTo(...top);
           context.lineTo(top[0], top[1] - (gridSize*n1.row + 1.5*gridSize));
+          context.stroke();
+          context.beginPath();
           break;
         case 'down':
           const bot: [number, number] = nodeBottom(n1);
           context.moveTo(...bot);
           context.lineTo(bot[0], bot[1] + (gridSize * (getMatrix().rows.length - n1.row) - 0.5*gridSize));
+          context.stroke();
+          context.beginPath();
           break;
         case 'left':
           const left: [number, number] = nodeLeft(n1);
           context.moveTo(...left);
           context.lineTo(left[0] - (gridSize*n1.col + 1.5*gridSize), left[1]);
+          context.stroke();
+          context.beginPath();
           break;
         case 'right':
           const right: [number, number] = nodeRight(n1);
           context.moveTo(...right);
           context.lineTo(right[0] + (gridSize * (getMatrix().cols.length - n1.col) - 0.5*gridSize), right[1]);
+          context.stroke();
+          context.beginPath();
           break;
         default:
       }
@@ -227,10 +235,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(!link.reverse && link.pct >= 100){ 
       link.animating = false; 
       link.draw = true;
+      link.pct = 100;
     }
     else if(link.reverse && link.pct <= 0){ 
       link.animating = false;
       link.draw = false; //don't draw links that have been retracted
+      link.pct = 0;
+      link.reverse = false;
     }
   };
 
