@@ -48,8 +48,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //reactively set canvas size based on matrix size
   const initCanvas = (): void => {
-    setWidth(gridSize * getMatrix().cols.length + gridSize*2);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*2);
+    setWidth(gridSize * getMatrix().cols.length + gridSize*10);
+    setHeight(gridSize * getMatrix().rows.length + gridSize*10);
   };
 
   //canvas main loop - draws and animates the matrix on the canvas
@@ -77,7 +77,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const drawMatrix = (): void => {
     context.clearRect(0, 0, getWidth(), getHeight());
     context.save()
-    context.translate(2*gridSize, 2*gridSize);
+    context.translate(5*gridSize, 5*gridSize);
     //draw each node
     getMatrix().allNodeMap((node: AlgXNode): void => {
       drawNode(node.nodeInfo);
@@ -146,12 +146,24 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     else{ //TODO - handle wrapping graphic
       switch(link.dir){
         case 'up':
+          const top: [number, number] = nodeTop(n1);
+          context.moveTo(...top);
+          context.lineTo(top[0], top[1] - (gridSize*n1.row + 1.5*gridSize));
           break;
         case 'down':
+          const bot: [number, number] = nodeBottom(n1);
+          context.moveTo(...bot);
+          context.lineTo(bot[0], bot[1] + (gridSize * (getMatrix().rows.length - n1.row) - 0.5*gridSize));
           break;
         case 'left':
+          const left: [number, number] = nodeLeft(n1);
+          context.moveTo(...left);
+          context.lineTo(left[0] - (gridSize*n1.col + 1.5*gridSize), left[1]);
           break;
         case 'right':
+          const right: [number, number] = nodeRight(n1);
+          context.moveTo(...right);
+          context.lineTo(right[0] + (gridSize * (getMatrix().cols.length - n1.col) - 0.5*gridSize), right[1]);
           break;
         default:
       }
@@ -222,24 +234,24 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
 
-    //translates matrix position to a tuple of canvas coordinates of a node
-    const nodeCenter = (node: NodeDrawInfo): [number, number] => {
-      return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize/2];
-    };
-    const nodeTop = (node: NodeDrawInfo): [number, number] => {
-      return [node.col*gridSize + nodeSize/2, node.row*gridSize];
-    };
-    const nodeBottom = (node: NodeDrawInfo): [number, number] => {
-      return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize];
-    };
-    const nodeLeft = (node: NodeDrawInfo): [number, number] => {
-      return [node.col*gridSize, node.row*gridSize + nodeSize/2];
-    };
-    const nodeRight = (node: NodeDrawInfo): [number, number] => {
-      return [node.col*gridSize + nodeSize, node.row*gridSize + nodeSize/2];
-    };
+  //translates matrix position to a tuple of canvas coordinates of a node
+  const nodeCenter = (node: NodeDrawInfo): [number, number] => {
+    return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize/2];
+  };
+  const nodeTop = (node: NodeDrawInfo): [number, number] => {
+    return [node.col*gridSize + nodeSize/2, node.row*gridSize];
+  };
+  const nodeBottom = (node: NodeDrawInfo): [number, number] => {
+    return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize];
+  };
+  const nodeLeft = (node: NodeDrawInfo): [number, number] => {
+    return [node.col*gridSize, node.row*gridSize + nodeSize/2];
+  };
+  const nodeRight = (node: NodeDrawInfo): [number, number] => {
+    return [node.col*gridSize + nodeSize, node.row*gridSize + nodeSize/2];
+  };
 
-   const solveCB = async (event: MouseEvent): Promise<void> => {
+  const solveCB = async (event: MouseEvent): Promise<void> => {
     let puzzle: Array<number> = [];
     for(const cell of props.boardState){
       puzzle.push(cell.getValue());
