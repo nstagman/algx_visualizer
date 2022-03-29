@@ -29,7 +29,7 @@ class AlgXNode {
 
   //returns initialized link animation info that represents a static fully drawn link
   getInitLinkInfo(dir: 'up' | 'down' | 'left' | 'right'): LinkDrawInfo {
-    return { dir: dir, animating: false, reverse: false, draw: true, pct: 100, start: undefined }
+    return { dir: dir, animating: false, reverse: false, draw: true, pct: 100, start: null }
   }
 
   //Generators to iterate full circle from this node
@@ -111,8 +111,8 @@ class AlgXMatrix {
   //iterate over every node in the matrix (left-to-right, top-to-bottom) and apply function fn to each node
   allNodeMap(fn: (node: AlgXNode) => any): any {
     let rval = fn(this.root);
-    for(const col of this.cols) {
-      rval ||= fn(col);
+    for(const node of this.cols) {
+      rval ||= fn(node);
     }
     for(const row of this.rows){
       for(const node of row.iterateRight(false)){
@@ -344,7 +344,6 @@ class AlgXMatrix {
       this.solution.push(solSearchNode.row);
       // -- Cover Partial Solution
       //for each node in selected row
-      console.log('cover ' + solSearchNode.col + ' ' + solSearchNode.row)
       for(const node of solSearchNode.iterateRight(false)){
         if(node.col < 0){ continue; }
         let coverCol = this.cols[node.col];
@@ -361,6 +360,7 @@ class AlgXMatrix {
         coverCol.right.linkInfo.left.draw = false;
         coverCol.nodeInfo.covered = true;
         yield 0;
+        this.rows[solSearchNode.row].nodeInfo.solution = true;
         //iterate down from covered column header
         for(const colNode of coverCol.iterateDown()){
           this.focusNode(colNode);
@@ -395,8 +395,7 @@ class AlgXMatrix {
 
       // -- Uncover Partial Solution
       //for each node in selected row
-      this.solution.pop();
-      console.log('uncover ' + solSearchNode.col + ' ' + solSearchNode.row)
+      this.rows[this.solution.pop()!].nodeInfo.solution = false;
       for(const node of solSearchNode.left.iterateLeft(false)){
         if(node.col < 0){ continue; }
         let uncoverCol = this.cols[node.col];

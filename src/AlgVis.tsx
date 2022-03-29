@@ -3,15 +3,15 @@ import { AlgXMatrix, AlgXNode, buildSudMatrix, buildTest, decodeSolution } from 
 import { JSXElement, Component, createSignal, createEffect, onMount } from 'solid-js';
 
 
-type NodeDrawInfo = { row: number, col: number, focused: boolean, covered: boolean, solution: boolean }
+type NodeDrawInfo = { row: number, col: number, focused: boolean, covered: boolean, solution: boolean };
 type LinkDrawInfo = {
   dir: 'up' | 'down' | 'left' | 'right',
   draw: boolean, //enable drawing flag
   animating: boolean, //link is currently animating
   reverse: boolean, //'unlink' animation is occuring
   pct: number, //percent animation complete
-  start?: Date //TODO - needed for constant line drawing speed?
-}
+  start: number | null//TODO - needed for constant line drawing speed?
+};
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //hardcoded vars for visualization size
@@ -19,8 +19,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const lineWidth = 1;
   const linkLen = nodeSize*3;
   const gridSize = nodeSize + linkLen
-  const animationStep = 1;
-  const animationAwaitTime = 2500/animationStep;
+  const nodeColor = '#000000';
+  const nodeCoveredColor = '#CCCCCC';
+  const nodeFocusedColor = '#FFFF00';
+  const nodeSolutionColor = '#00FF00';
+  const linkColor = '#FF0000';
+  const linkCoveredColor = '#CCCCCC';
+  const animationStep = 2;
+  const animationConstWaitTime = 1000/animationStep;
   //component state and reference variables
   let canvas: any;
   let context: CanvasRenderingContext2D;
@@ -83,32 +89,35 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       drawNode(node.nodeInfo);
     });
     //draw all 4 links of each node
+    context.beginPath()
     getMatrix().allNodeMap((node: AlgXNode): void => {
       drawLink(node.linkInfo.up, node.nodeInfo, node.up.nodeInfo);
       drawLink(node.linkInfo.down, node.nodeInfo, node.down.nodeInfo);
       drawLink(node.linkInfo.left, node.nodeInfo, node.left.nodeInfo);
       drawLink(node.linkInfo.right, node.nodeInfo, node.right.nodeInfo);
     });
+    context.stroke();
     context.restore();
   };
 
   const drawNode = (node: NodeDrawInfo):void => {
-    context.fillStyle = '#000000';
-    if(node.covered){ context.fillStyle = '#CCCCCC'; }
-    if(node.focused) { context.fillStyle = '#FFFF00'; }
+    context.fillStyle = nodeColor;
+    if(node.covered){ context.fillStyle = nodeCoveredColor; }
+    if(node.focused){ context.fillStyle = nodeFocusedColor; }
+    if(node.solution){ context.fillStyle = nodeSolutionColor; }
     context.beginPath();
     context.arc(node.col * gridSize + nodeSize/2, node.row * gridSize + nodeSize/2, nodeSize/2, 0, 2*Math.PI);
     context.fill();
-    context.strokeStyle = '#000000';
+    context.strokeStyle = nodeColor;
     context.beginPath();
     context.arc(node.col * gridSize + nodeSize/2, node.row * gridSize + nodeSize/2, nodeSize/2, 0, 2*Math.PI);
     context.stroke();
-    // context.fillRect(node.col * gridSize, node.row * gridSize, nodeSize, nodeSize);
   };
 
   const drawLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo):void => {
     if(!link.draw){ return; }
-    context.strokeStyle = '#FF0000';
+    context.strokeStyle = linkColor;
+    context.lineWidth = lineWidth;
     const wrapping = //determine if this link wraps around matrix
       link.dir === 'up' && n2.row > n1.row ||
       link.dir === 'down' && n2.row < n1.row ||
@@ -120,8 +129,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawStaticLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo, wrap: boolean): void => {
     if(link.pct <= 0){ return; }
-    context.beginPath();
-    context.lineWidth = lineWidth;
     if(!wrap){
       switch(link.dir){
         case 'up':
@@ -144,76 +151,82 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       }
     }
     else{ //TODO - handle wrapping graphic
+      let x: number;
+      let y: number;
       switch(link.dir){
         case 'up':
-          const top: [number, number] = nodeTop(n1);
-          context.moveTo(...top);
-          context.lineTo(top[0], top[1] - (gridSize*n1.row + 1.5*gridSize));
-          context.stroke();
-          context.beginPath();
+          [x,y] = nodeTop(n1);
+          context.moveTo(x, y);
+          context.lineTo(x, y - (gridSize*n1.row + 1.5*gridSize));
+          [x,y] = nodeBottom(n2);
+          context.moveTo(x, y + (gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize));
+          context.lineTo(x, y);
           break;
         case 'down':
-          const bot: [number, number] = nodeBottom(n1);
-          context.moveTo(...bot);
-          context.lineTo(bot[0], bot[1] + (gridSize * (getMatrix().rows.length - n1.row) - 0.5*gridSize));
-          context.stroke();
-          context.beginPath();
+          [x,y] = nodeBottom(n1);
+          context.moveTo(x, y);
+          context.lineTo(x, y + (gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize));
+          [x,y] = nodeTop(n2);
+          context.moveTo(x, y - (gridSize*n2.row + 1.5*gridSize));
+          context.lineTo(...nodeTop(n2));
           break;
         case 'left':
-          const left: [number, number] = nodeLeft(n1);
-          context.moveTo(...left);
-          context.lineTo(left[0] - (gridSize*n1.col + 1.5*gridSize), left[1]);
-          context.stroke();
-          context.beginPath();
+          [x,y] = nodeLeft(n1);
+          context.moveTo(x, y);
+          context.lineTo(x - (gridSize*n1.col + 1.5*gridSize), y);
+          [x,y] = nodeRight(n2);
+          context.moveTo(x + (gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize ), y);
+          context.lineTo(...nodeRight(n2));
           break;
         case 'right':
-          const right: [number, number] = nodeRight(n1);
-          context.moveTo(...right);
-          context.lineTo(right[0] + (gridSize * (getMatrix().cols.length - n1.col) - 0.5*gridSize), right[1]);
-          context.stroke();
-          context.beginPath();
+          [x,y] = nodeRight(n1);
+          context.moveTo(x, y);
+          context.lineTo(x + (gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize), y);
+          [x,y] = nodeLeft(n2);
+          context.moveTo(x - (gridSize*n2.col + 1.5*gridSize), y);
+          context.lineTo(...nodeLeft(n2));
           break;
         default:
       }
     }
-    context.stroke()
   };
 
   const drawAnimatedLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo, wrap: boolean): void => {
-    context.beginPath();
-    context.lineWidth = lineWidth;
     if(!link.reverse){ link.pct = link.pct + animationStep >= 100 ? 100 : link.pct + animationStep; }
     else{ link.pct = link.pct - animationStep <= 0 ? 0 : link.pct - animationStep; }
-    let x, y, lineLength;
+    let x: number;
+    let y: number;
     if(!wrap){
+      let requiredLength: number;
+      let currentLength: number;
       switch(link.dir){
         case 'up':
-          lineLength = (n1.row - n2.row) * gridSize - nodeSize;
-          lineLength *= link.pct/100;
+          requiredLength = (n1.row - n2.row) * gridSize - nodeSize;
+          currentLength = requiredLength * link.pct/100;
           [x, y] = nodeTop(n1);
           context.moveTo(x, y);
-          context.lineTo(x, y - lineLength);
+          context.lineTo(x, y - currentLength);
           break;
         case 'down':
-          lineLength = (n2.row - n1.row) * gridSize - nodeSize;
-          lineLength *= link.pct/100;
+          requiredLength = (n2.row - n1.row) * gridSize - nodeSize;
+          currentLength = requiredLength * link.pct/100;
           [x, y] = nodeBottom(n1);
           context.moveTo(x, y);
-          context.lineTo(x, y + lineLength);
+          context.lineTo(x, y + currentLength);
           break;
         case 'left':
-          lineLength = (n1.col - n2.col) * gridSize - nodeSize;
-          lineLength *= link.pct/100;
+          requiredLength = (n1.col - n2.col) * gridSize - nodeSize;
+          currentLength = requiredLength * link.pct/100;
           [x, y] = nodeLeft(n1);
           context.moveTo(x, y);
-          context.lineTo(x - lineLength, y);
+          context.lineTo(x - currentLength, y);
           break;
         case 'right':
-          lineLength = (n2.col - n1.col) * gridSize - nodeSize;
-          lineLength *= link.pct/100;
+          requiredLength = (n2.col - n1.col) * gridSize - nodeSize;
+          currentLength = requiredLength * link.pct/100;
           [x, y] = nodeRight(n1);
           context.moveTo(x, y);
-          context.lineTo(x + lineLength, y);
+          context.lineTo(x + currentLength, y);
           break;
         default:
       }
@@ -231,7 +244,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         default:
       }
     }
-    context.stroke()
     if(!link.reverse && link.pct >= 100){ 
       link.animating = false; 
       link.draw = true;
@@ -281,7 +293,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         animationComplete = null;
       }
       else{ //wait for a set time instead of the animator before continuing
-        await new Promise((resolve) => {setTimeout(resolve, (update/100)*animationAwaitTime)});
+        await new Promise((resolve) => {setTimeout(resolve, (update/100)*animationConstWaitTime)});
       }
       if(stepMode){
         await (stepComplete = getExposedPromise());
