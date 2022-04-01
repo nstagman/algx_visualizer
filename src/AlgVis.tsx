@@ -37,10 +37,18 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [getWidth, setWidth] = createSignal(0);
   const [getHeight, setHeight] = createSignal(0);
 
+
   //testing only - getMatrix needs to be passed in as a prop from the user interactive portion
   const [getMatrix, setMatrix] = createSignal(buildTest());
 
-  //solidjs effect - this causes initCanvas to run anytime a signal used by initCanvas (getMatrix) changes
+
+  //reactively set canvas size based on matrix size
+  const initCanvas = (): void => {
+    setWidth(gridSize * getMatrix().cols.length + gridSize*10);
+    setHeight(gridSize * getMatrix().rows.length + gridSize*10);
+  };
+
+  //solidjs effect - this causes initCanvas to run anytime a solidjs signal used by initCanvas (getMatrix) changes
   createEffect(() => {
     initCanvas();
   });
@@ -51,12 +59,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     context = canvas.getContext('2d');
     updateCanvas();
   });
-
-  //reactively set canvas size based on matrix size
-  const initCanvas = (): void => {
-    setWidth(gridSize * getMatrix().cols.length + gridSize*10);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*10);
-  };
 
   //canvas main loop - draws and animates the matrix on the canvas
   const updateCanvas = (): void => {
@@ -196,9 +198,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     else{ link.pct = link.pct - animationStep <= 0 ? 0 : link.pct - animationStep; }
     let x: number;
     let y: number;
+    let requiredLength: number;
+    let currentLength: number;
     if(!wrap){
-      let requiredLength: number;
-      let currentLength: number;
       switch(link.dir){
         case 'up':
           requiredLength = (n1.row - n2.row) * gridSize - nodeSize;
@@ -232,8 +234,22 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       }
     }
     else{ //TODO - handle wrapping animation
+      let wrapLength: number;
+      let finishLength: number;
       switch(link.dir){
         case 'up':
+          wrapLength = gridSize*n1.row + 1.5*gridSize;
+          finishLength = gridSize*(getMatrix().rows.length - n2.row ) - 0.5*gridSize;
+          requiredLength = wrapLength + finishLength;
+          currentLength = requiredLength * link.pct/100;
+          [x,y] = nodeTop(n1);
+          context.moveTo(x, y);
+          context.lineTo(x, y - (gridSize*n1.row + 1.5*gridSize));
+          if(currentLength > wrapLength){
+            [x,y] = nodeBottom(n2);
+            context.moveTo(x, y + (gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize));
+            context.lineTo(x, y);
+          }
           break;
         case 'down':
           break;
@@ -274,6 +290,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     return [node.col*gridSize + nodeSize, node.row*gridSize + nodeSize/2];
   };
 
+  //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
     let puzzle: Array<number> = [];
     for(const cell of props.boardState){
@@ -284,7 +301,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       await new Promise(r => setTimeout(r, 50));
     }
   };
-
   const testCB = async (event: MouseEvent): Promise<void> => {
     setMatrix(buildTest());
     for(const update of getMatrix().animatedAlgXSearch()){
@@ -302,7 +318,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
     console.log(getMatrix().solution)
   };
-
   const stepCB = (event: MouseEvent): void => {
     if(stepComplete !== null){ stepComplete.resolve(true); }
   };
