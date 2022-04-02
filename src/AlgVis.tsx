@@ -239,23 +239,59 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       switch(link.dir){
         case 'up':
           wrapLength = gridSize*n1.row + 1.5*gridSize;
-          finishLength = gridSize*(getMatrix().rows.length - n2.row ) - 0.5*gridSize;
+          finishLength = gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize;
           requiredLength = wrapLength + finishLength;
           currentLength = requiredLength * link.pct/100;
           [x,y] = nodeTop(n1);
           context.moveTo(x, y);
-          context.lineTo(x, y - (gridSize*n1.row + 1.5*gridSize));
+          context.lineTo(x, y - currentLength < wrapLength ? currentLength : wrapLength);
           if(currentLength > wrapLength){
             [x,y] = nodeBottom(n2);
-            context.moveTo(x, y + (gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize));
+            context.moveTo(x, y + currentLength - wrapLength);
             context.lineTo(x, y);
           }
           break;
         case 'down':
+          wrapLength = gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize;
+          finishLength = gridSize*n2.row + 1.5*gridSize;
+          requiredLength = wrapLength + finishLength;
+          currentLength = requiredLength * link.pct/100;
+          [x,y] = nodeBottom(n1);
+          context.moveTo(x, y);
+          context.lineTo(x, y + currentLength < wrapLength ? currentLength : wrapLength);
+          if(currentLength > wrapLength){
+            [x,y] = nodeTop(n2);
+            context.moveTo(x, y - currentLength - wrapLength);
+            context.lineTo(x, y);
+          }
           break;
         case 'left':
+          wrapLength = gridSize*n1.col + 1.5*gridSize;
+          finishLength = gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize;
+          requiredLength = wrapLength + finishLength;
+          currentLength = requiredLength * link.pct/100;
+          [x,y] = nodeLeft(n1);
+          context.moveTo(x, y);
+          context.lineTo(x - currentLength < wrapLength ? currentLength : wrapLength, y);
+          if(currentLength > wrapLength){
+            [x,y] = nodeRight(n2);
+            context.moveTo(x + currentLength - wrapLength, y);
+            context.lineTo(x, y);
+          }
           break;
         case 'right':
+          wrapLength = gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize;
+          finishLength = gridSize*n2.col + 1.5*gridSize;
+          requiredLength = wrapLength + finishLength;
+          currentLength = requiredLength * link.pct/100;
+          [x,y] = nodeRight(n1);
+          context.moveTo(x, y);
+          context.lineTo(x + currentLength < wrapLength ? currentLength : wrapLength, y);
+          if(currentLength > wrapLength){
+            [x,y] = nodeLeft(n2);
+            context.moveTo(x - currentLength - wrapLength, y);
+            context.lineTo(x, y);
+          }
           break;
         default:
       }
