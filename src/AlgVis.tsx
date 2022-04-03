@@ -25,7 +25,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const nodeSolutionColor = '#00FF00';
   const linkColor = '#FF0000';
   const linkCoveredColor = '#CCCCCC';
-  const animationStep = 2;
+  const animationStep = 0.4;
   const animationConstWaitTime = 1000/animationStep;
   //component state and reference variables
   let canvas: any;
@@ -244,11 +244,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
           currentLength = requiredLength * link.pct/100;
           [x,y] = nodeTop(n1);
           context.moveTo(x, y);
-          context.lineTo(x, y - currentLength < wrapLength ? currentLength : wrapLength);
+          context.lineTo(x, y - (currentLength < wrapLength ? currentLength : wrapLength));
           if(currentLength > wrapLength){
             [x,y] = nodeBottom(n2);
-            context.moveTo(x, y + currentLength - wrapLength);
-            context.lineTo(x, y);
+            context.moveTo(x, y + finishLength);
+            context.lineTo(x, y + finishLength - currentLength + wrapLength);
           }
           break;
         case 'down':
@@ -258,11 +258,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
           currentLength = requiredLength * link.pct/100;
           [x,y] = nodeBottom(n1);
           context.moveTo(x, y);
-          context.lineTo(x, y + currentLength < wrapLength ? currentLength : wrapLength);
+          context.lineTo(x, y + (currentLength < wrapLength ? currentLength : wrapLength));
           if(currentLength > wrapLength){
             [x,y] = nodeTop(n2);
-            context.moveTo(x, y - currentLength - wrapLength);
-            context.lineTo(x, y);
+            context.moveTo(x, y - finishLength);
+            context.lineTo(x, y - finishLength + currentLength - wrapLength);
           }
           break;
         case 'left':
@@ -272,11 +272,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
           currentLength = requiredLength * link.pct/100;
           [x,y] = nodeLeft(n1);
           context.moveTo(x, y);
-          context.lineTo(x - currentLength < wrapLength ? currentLength : wrapLength, y);
+          context.lineTo(x - (currentLength < wrapLength ? currentLength : wrapLength), y);
           if(currentLength > wrapLength){
             [x,y] = nodeRight(n2);
-            context.moveTo(x + currentLength - wrapLength, y);
-            context.lineTo(x, y);
+            context.moveTo(x + finishLength, y);
+            context.lineTo(x + finishLength - currentLength + wrapLength, y);
           }
           break;
         case 'right':
@@ -286,22 +286,22 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
           currentLength = requiredLength * link.pct/100;
           [x,y] = nodeRight(n1);
           context.moveTo(x, y);
-          context.lineTo(x + currentLength < wrapLength ? currentLength : wrapLength, y);
+          context.lineTo(x + (currentLength < wrapLength ? currentLength : wrapLength), y);
           if(currentLength > wrapLength){
             [x,y] = nodeLeft(n2);
-            context.moveTo(x - currentLength - wrapLength, y);
-            context.lineTo(x, y);
+            context.moveTo(x - finishLength, y);
+            context.lineTo(x - finishLength + currentLength - wrapLength, y);
           }
           break;
         default:
       }
     }
-    if(!link.reverse && link.pct >= 100){ 
+    if(!link.reverse && link.pct >= 100){
       link.animating = false; 
       link.draw = true;
       link.pct = 100;
     }
-    else if(link.reverse && link.pct <= 0){ 
+    else if(link.reverse && link.pct <= 0){
       link.animating = false;
       link.draw = false; //don't draw links that have been retracted
       link.pct = 0;
