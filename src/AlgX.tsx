@@ -421,6 +421,8 @@ class AlgXMatrix {
             //'insert' each node back in to its column
             //update animation for unlinking links
             this.focusNode(rowNode);
+            rowNode.up.linkInfo.down.draw = false;
+            rowNode.down.linkInfo.up.draw = false;
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
             yield 0;
             //update animation info for relinking newly assigned links
