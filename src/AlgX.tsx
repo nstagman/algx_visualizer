@@ -29,7 +29,7 @@ class AlgXNode {
 
   //returns initialized link animation info that represents a static fully drawn link
   getInitLinkInfo(dir: 'up' | 'down' | 'left' | 'right'): LinkDrawInfo {
-    return { dir: dir, animating: false, reverse: false, draw: true, pct: 100, start: null }
+    return { dir: dir, animating: false, reverse: false, draw: true, pct: 100 }
   }
 
   //Generators to iterate full circle from this node
@@ -363,27 +363,28 @@ class AlgXMatrix {
         this.rows[solSearchNode.row].nodeInfo.solution = true;
         //iterate down from covered column header
         for(const colNode of coverCol.iterateDown()){
-          this.focusNode(colNode);
-          colNode.nodeInfo.covered = true;
-          yield 100;
           //cover each row
+          this.focusNode(colNode);
           for(const rowNode of colNode.iterateRight()){
             //update animation info for unlinking the links
-            this.focusNode(rowNode);
             rowNode.linkInfo.up.draw = false;
             rowNode.linkInfo.down.draw = false;
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
             this.unlinkAniUpdate(rowNode.down.linkInfo.up);
-            yield 0;
+          }
+          yield 0;
+          for(const rowNode of colNode.iterateRight()){
             //update animation info for relinking newly assigned links
             rowNode.up.down = rowNode.down;
             rowNode.down.up = rowNode.up;
             this.relinkAniUpdate(rowNode.up.linkInfo.down);
             rowNode.down.linkInfo.up.draw = false;
-            rowNode.nodeInfo.covered = true;
             //don't attempt to access the row-headers column
             if(rowNode.col >= 0){ this.cols[rowNode.col].count -= 1; }
-            yield 0;
+          }
+          yield 0;
+          for(const rowNode of colNode.iterateRight(false)){
+            rowNode.nodeInfo.covered = true;
           }
         }
       }
@@ -413,31 +414,33 @@ class AlgXMatrix {
         uncoverCol.linkInfo.right.draw = true;
         //iterate up from column header
         for(const colNode of uncoverCol.iterateUp()){
-          this.focusNode(colNode);
-          colNode.nodeInfo.covered = false;
-          yield 100;
           //uncover each row
+          this.focusNode(colNode);
           for(const rowNode of colNode.iterateLeft()){
-            //'insert' each node back in to its column
             //update animation for unlinking links
-            this.focusNode(rowNode);
             rowNode.up.linkInfo.down.draw = false;
             rowNode.down.linkInfo.up.draw = false;
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
-            yield 0;
+          }
+          yield 0;
+          for(const rowNode of colNode.iterateLeft()){
+            //'insert' each node back in to its column
             //update animation info for relinking newly assigned links
             rowNode.up.down = rowNode;
             rowNode.down.up = rowNode;
             this.relinkAniUpdate(rowNode.up.linkInfo.down);
             this.relinkAniUpdate(rowNode.down.linkInfo.up);
-            rowNode.nodeInfo.covered = false;
             //don't attempt to access the row-headers column
             if(rowNode.col >= 0){ this.cols[rowNode.col].count += 1; }
-            yield 0;
+          }
+          yield 0;
+          for(const rowNode of colNode.iterateLeft()){
             //let the links be drawn since we are now doubly linked again
             rowNode.linkInfo.up.draw = true;
             rowNode.linkInfo.down.draw = true;
+            rowNode.nodeInfo.covered = false;
           }
+          colNode.nodeInfo.covered = false;
         }
       }
     }
@@ -553,3 +556,120 @@ const decodeSolution = (solution: Array<number>): Array<number> => {
 //#endregion
 
 export { AlgXMatrix, AlgXNode, buildSudMatrix, buildTest, decodeSolution }
+
+
+// *animatedAlgXSearch(): Generator<number, boolean, any> {
+//   //recursive search function
+//   if(this.isEmpty()){ //solution exists when matrix is empty
+//     this.solved = true;
+//     return true;
+//   }
+//   //select col with minimum nodes to continue search
+//   let selCol: AlgXNode = this.selectMinCol();
+//   if(selCol.count < 1){ return false; } //this branch has failed
+
+//   //iterate down from selected columns
+//   for(const solSearchNode of selCol.iterateDown()){
+//     this.solution.push(solSearchNode.row);
+//     // -- Cover Partial Solution
+//     //for each node in selected row
+//     for(const node of solSearchNode.iterateRight(false)){
+//       if(node.col < 0){ continue; }
+//       let coverCol = this.cols[node.col];
+//       //cover each nodes column - 'remove' node's column from matrix
+//       this.focusNode(coverCol);
+//       coverCol.linkInfo.left.draw = false;
+//       coverCol.linkInfo.right.draw = false;
+//       this.unlinkAniUpdate(coverCol.left.linkInfo.right);
+//       this.unlinkAniUpdate(coverCol.right.linkInfo.left);
+//       yield 0;
+//       coverCol.right.left = coverCol.left;
+//       coverCol.left.right = coverCol.right;
+//       this.relinkAniUpdate(coverCol.left.linkInfo.right);
+//       coverCol.right.linkInfo.left.draw = false;
+//       coverCol.nodeInfo.covered = true;
+//       yield 0;
+//       this.rows[solSearchNode.row].nodeInfo.solution = true;
+//       //iterate down from covered column header
+//       for(const colNode of coverCol.iterateDown()){
+//         this.focusNode(colNode);
+//         colNode.nodeInfo.covered = true;
+//         yield 100;
+//         //cover each row
+//         for(const rowNode of colNode.iterateRight()){
+//           //update animation info for unlinking the links
+//           this.focusNode(rowNode);
+//           rowNode.linkInfo.up.draw = false;
+//           rowNode.linkInfo.down.draw = false;
+//           this.unlinkAniUpdate(rowNode.up.linkInfo.down);
+//           this.unlinkAniUpdate(rowNode.down.linkInfo.up);
+//           yield 0;
+//           //update animation info for relinking newly assigned links
+//           rowNode.up.down = rowNode.down;
+//           rowNode.down.up = rowNode.up;
+//           this.relinkAniUpdate(rowNode.up.linkInfo.down);
+//           rowNode.down.linkInfo.up.draw = false;
+//           rowNode.nodeInfo.covered = true;
+//           //don't attempt to access the row-headers column
+//           if(rowNode.col >= 0){ this.cols[rowNode.col].count -= 1; }
+//           yield 0;
+//         }
+//       }
+//     }
+
+//     //search again after covering
+//     //if solution is found on this branch, leave loop and stop
+//     for(const yieldVal of this.animatedAlgXSearch()){ yield yieldVal; }
+//     if(this.solved){ break; }
+
+//     // -- Uncover Partial Solution
+//     //for each node in selected row
+//     this.rows[this.solution.pop()!].nodeInfo.solution = false;
+//     for(const node of solSearchNode.left.iterateLeft(false)){
+//       if(node.col < 0){ continue; }
+//       let uncoverCol = this.cols[node.col];
+//       //'insert' node's column back into matrix
+//       this.focusNode(uncoverCol);
+//       this.unlinkAniUpdate(uncoverCol.left.linkInfo.right);
+//       yield 0;
+//       uncoverCol.right.left = uncoverCol;
+//       uncoverCol.left.right = uncoverCol;
+//       this.relinkAniUpdate(uncoverCol.left.linkInfo.right);
+//       this.relinkAniUpdate(uncoverCol.right.linkInfo.left);
+//       uncoverCol.nodeInfo.covered = false;
+//       yield 0;
+//       uncoverCol.linkInfo.left.draw = true;
+//       uncoverCol.linkInfo.right.draw = true;
+//       //iterate up from column header
+//       for(const colNode of uncoverCol.iterateUp()){
+//         this.focusNode(colNode);
+//         colNode.nodeInfo.covered = false;
+//         yield 100;
+//         //uncover each row
+//         for(const rowNode of colNode.iterateLeft()){
+//           //'insert' each node back in to its column
+//           //update animation for unlinking links
+//           this.focusNode(rowNode);
+//           rowNode.up.linkInfo.down.draw = false;
+//           rowNode.down.linkInfo.up.draw = false;
+//           this.unlinkAniUpdate(rowNode.up.linkInfo.down);
+//           yield 0;
+//           //update animation info for relinking newly assigned links
+//           rowNode.up.down = rowNode;
+//           rowNode.down.up = rowNode;
+//           this.relinkAniUpdate(rowNode.up.linkInfo.down);
+//           this.relinkAniUpdate(rowNode.down.linkInfo.up);
+//           rowNode.nodeInfo.covered = false;
+//           //don't attempt to access the row-headers column
+//           if(rowNode.col >= 0){ this.cols[rowNode.col].count += 1; }
+//           yield 0;
+//           //let the links be drawn since we are now doubly linked again
+//           rowNode.linkInfo.up.draw = true;
+//           rowNode.linkInfo.down.draw = true;
+//         }
+//       }
+//     }
+//   }
+//   this.focusNode(this.root)
+//   return this.solved;
+// }
