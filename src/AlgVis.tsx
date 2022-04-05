@@ -25,7 +25,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const nodeSolutionColor = '#00FF00';
   const linkColor = '#FF0000';
   const linkCoveredColor = '#CCCCCC';
-  const animationStep = 0.4;
+  const animationStep = 3;
   const animationConstWaitTime = 1000/animationStep;
   //component state and reference variables
   let canvas: any;
@@ -92,6 +92,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     });
     //draw all 4 links of each node
     context.beginPath()
+    context.strokeStyle = linkColor;
+    context.lineWidth = lineWidth;
     getMatrix().allNodeMap((node: AlgXNode): void => {
       drawLink(node.linkInfo.up, node.nodeInfo, node.up.nodeInfo);
       drawLink(node.linkInfo.down, node.nodeInfo, node.down.nodeInfo);
@@ -116,186 +118,113 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     context.stroke();
   };
 
+  //draw link from n1 to n2
   const drawLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo):void => {
     if(!link.draw){ return; }
-    context.strokeStyle = linkColor;
-    context.lineWidth = lineWidth;
-    const wrapping = //determine if this link wraps around matrix
-      link.dir === 'up' && n2.row > n1.row ||
-      link.dir === 'down' && n2.row < n1.row ||
-      link.dir === 'left' && n2.col > n1.col ||
-      link.dir === 'right' && n2.col < n1.col;
-    if(!link.animating){ drawStaticLink(link, n1, n2, wrapping); }
-    else{ drawAnimatedLink(link, n1, n2, wrapping); }
-  };
 
-  const drawStaticLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo, wrap: boolean): void => {
-    if(link.pct <= 0){ return; }
-    if(!wrap){
-      switch(link.dir){
-        case 'up':
-          context.moveTo(...nodeTop(n1));
-          context.lineTo(...nodeBottom(n2));
-          break;
-        case 'down':
-          context.moveTo(...nodeBottom(n1));
-          context.lineTo(...nodeTop(n2));
-          break;
-        case 'left':
-          context.moveTo(...nodeLeft(n1));
-          context.lineTo(...nodeRight(n2));
-          break;
-        case 'right':
-          context.moveTo(...nodeRight(n1));
-          context.lineTo(...nodeLeft(n2));
-          break;
-        default:
-      }
+    //update link pct
+    if(!link.reverse){
+      link.pct = link.pct + animationStep >= 100 ? 100 : link.pct + animationStep;
     }
-    else{ //TODO - handle wrapping graphic
-      let x: number;
-      let y: number;
-      switch(link.dir){
-        case 'up':
-          [x,y] = nodeTop(n1);
-          context.moveTo(x, y);
-          context.lineTo(x, y - (gridSize*n1.row + 1.5*gridSize));
-          [x,y] = nodeBottom(n2);
-          context.moveTo(x, y + (gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize));
-          context.lineTo(x, y);
-          break;
-        case 'down':
-          [x,y] = nodeBottom(n1);
-          context.moveTo(x, y);
-          context.lineTo(x, y + (gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize));
-          [x,y] = nodeTop(n2);
-          context.moveTo(x, y - (gridSize*n2.row + 1.5*gridSize));
-          context.lineTo(...nodeTop(n2));
-          break;
-        case 'left':
-          [x,y] = nodeLeft(n1);
-          context.moveTo(x, y);
-          context.lineTo(x - (gridSize*n1.col + 1.5*gridSize), y);
-          [x,y] = nodeRight(n2);
-          context.moveTo(x + (gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize ), y);
-          context.lineTo(...nodeRight(n2));
-          break;
-        case 'right':
-          [x,y] = nodeRight(n1);
-          context.moveTo(x, y);
-          context.lineTo(x + (gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize), y);
-          [x,y] = nodeLeft(n2);
-          context.moveTo(x - (gridSize*n2.col + 1.5*gridSize), y);
-          context.lineTo(...nodeLeft(n2));
-          break;
-        default:
-      }
+    else{
+      link.pct = link.pct - animationStep <= 0 ? 0 : link.pct - animationStep;
     }
-  };
-
-  const drawAnimatedLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo, wrap: boolean): void => {
-    if(!link.reverse){ link.pct = link.pct + animationStep >= 100 ? 100 : link.pct + animationStep; }
-    else{ link.pct = link.pct - animationStep <= 0 ? 0 : link.pct - animationStep; }
+    let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
-    let requiredLength: number;
-    let currentLength: number;
-    if(!wrap){
-      switch(link.dir){
-        case 'up':
-          requiredLength = (n1.row - n2.row) * gridSize - nodeSize;
-          currentLength = requiredLength * link.pct/100;
-          [x, y] = nodeTop(n1);
+    let currentLength: number; //amount of link to draw this frame
+    let line1Length: number; //distance between 2 nodes - or distance from node to edge of matrix if wrapping
+    let line2Length: number; //used for drawing the second line if the link wraps
+
+    //draw link in corresponding direction
+    switch(link.dir){
+      case 'up':
+        wrapping = n2.row > n1.row;
+        //determine line lengths
+        line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize;
+        line2Length = wrapping ? gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize: 0;
+        currentLength = (line1Length + line2Length) * link.pct/100;
+        //move to top of node and draw the current length of link upward
+        [x,y] = nodeTop(n1);
+        context.moveTo(x, y);
+        context.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
+        //draw second line if wrapping
+        if(currentLength > line1Length && wrapping){
+          currentLength -= line1Length; //remove already drawn portion of length
+          //move to bottom of matrix and draw remainder of link towards node 2
+          [x,y] = nodeBottom(n2);
+          y += line2Length;
           context.moveTo(x, y);
           context.lineTo(x, y - currentLength);
-          break;
-        case 'down':
-          requiredLength = (n2.row - n1.row) * gridSize - nodeSize;
-          currentLength = requiredLength * link.pct/100;
-          [x, y] = nodeBottom(n1);
+        }
+        break;
+      
+      case 'down':
+        wrapping = n2.row < n1.row;
+        //determine line lengths
+        line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize;
+        line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
+        currentLength = (line1Length + line2Length) * link.pct/100;
+        //move to bottom of node and draw the current length of link downward
+        [x,y] = nodeBottom(n1);
+        context.moveTo(x, y);
+        context.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
+        //draw second line for wrapping
+        if(currentLength > line1Length && wrapping){
+          currentLength -= line1Length; //remove already drawn portion of length
+          //move to top of matrix and draw remainder of link towards node 2
+          [x,y] = nodeTop(n2);
+          y -= line2Length;
           context.moveTo(x, y);
           context.lineTo(x, y + currentLength);
-          break;
-        case 'left':
-          requiredLength = (n1.col - n2.col) * gridSize - nodeSize;
-          currentLength = requiredLength * link.pct/100;
-          [x, y] = nodeLeft(n1);
+        }
+        break;
+      
+      case 'left':
+        wrapping = n2.col > n1.col;
+        //determine line lengths
+        line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize;
+        line2Length = wrapping ? gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize : 0;
+        currentLength = (line1Length + line2Length) * link.pct/100;
+        //move to left of node and draw the current length of link leftward
+        [x,y] = nodeLeft(n1);
+        context.moveTo(x, y);
+        context.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
+        //draw second line for wrapping
+        if(currentLength > line1Length && wrapping){
+          currentLength -= line1Length; //remove already drawn portion of length
+          //move to right of matrix and draw remainder of link towards node 2
+          [x,y] = nodeRight(n2);
+          x += line2Length;
           context.moveTo(x, y);
           context.lineTo(x - currentLength, y);
-          break;
-        case 'right':
-          requiredLength = (n2.col - n1.col) * gridSize - nodeSize;
-          currentLength = requiredLength * link.pct/100;
-          [x, y] = nodeRight(n1);
+        }
+        break;
+      
+      case 'right':
+        wrapping = n2.col < n1.col;
+        //determine line lengths
+        line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize;
+        line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
+        currentLength = (line1Length + line2Length) * link.pct/100;
+        //move to right of node and draw the current length of link rightward
+        [x,y] = nodeRight(n1);
+        context.moveTo(x, y);
+        context.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
+        //draw second line for wrapping
+        if(currentLength > line1Length && wrapping){
+          currentLength -= line1Length; //remove already drawn portion of length
+          //move to left of matrix and draw remainder of link towards node 2
+          [x,y] = nodeLeft(n2);
+          x -= line2Length;
           context.moveTo(x, y);
           context.lineTo(x + currentLength, y);
-          break;
-        default:
-      }
+        }
+        break;
+      default:
     }
-    else{ //TODO - handle wrapping animation
-      let wrapLength: number;
-      let finishLength: number;
-      switch(link.dir){
-        case 'up':
-          wrapLength = gridSize*n1.row + 1.5*gridSize;
-          finishLength = gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize;
-          requiredLength = wrapLength + finishLength;
-          currentLength = requiredLength * link.pct/100;
-          [x,y] = nodeTop(n1);
-          context.moveTo(x, y);
-          context.lineTo(x, y - (currentLength < wrapLength ? currentLength : wrapLength));
-          if(currentLength > wrapLength){
-            [x,y] = nodeBottom(n2);
-            context.moveTo(x, y + finishLength);
-            context.lineTo(x, y + finishLength - currentLength + wrapLength);
-          }
-          break;
-        case 'down':
-          wrapLength = gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize;
-          finishLength = gridSize*n2.row + 1.5*gridSize;
-          requiredLength = wrapLength + finishLength;
-          currentLength = requiredLength * link.pct/100;
-          [x,y] = nodeBottom(n1);
-          context.moveTo(x, y);
-          context.lineTo(x, y + (currentLength < wrapLength ? currentLength : wrapLength));
-          if(currentLength > wrapLength){
-            [x,y] = nodeTop(n2);
-            context.moveTo(x, y - finishLength);
-            context.lineTo(x, y - finishLength + currentLength - wrapLength);
-          }
-          break;
-        case 'left':
-          wrapLength = gridSize*n1.col + 1.5*gridSize;
-          finishLength = gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize;
-          requiredLength = wrapLength + finishLength;
-          currentLength = requiredLength * link.pct/100;
-          [x,y] = nodeLeft(n1);
-          context.moveTo(x, y);
-          context.lineTo(x - (currentLength < wrapLength ? currentLength : wrapLength), y);
-          if(currentLength > wrapLength){
-            [x,y] = nodeRight(n2);
-            context.moveTo(x + finishLength, y);
-            context.lineTo(x + finishLength - currentLength + wrapLength, y);
-          }
-          break;
-        case 'right':
-          wrapLength = gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize;
-          finishLength = gridSize*n2.col + 1.5*gridSize;
-          requiredLength = wrapLength + finishLength;
-          currentLength = requiredLength * link.pct/100;
-          [x,y] = nodeRight(n1);
-          context.moveTo(x, y);
-          context.lineTo(x + (currentLength < wrapLength ? currentLength : wrapLength), y);
-          if(currentLength > wrapLength){
-            [x,y] = nodeLeft(n2);
-            context.moveTo(x - finishLength, y);
-            context.lineTo(x - finishLength + currentLength - wrapLength, y);
-          }
-          break;
-        default:
-      }
-    }
+
+    //update link state variables
     if(!link.reverse && link.pct >= 100){
       link.animating = false; 
       link.draw = true;
@@ -303,9 +232,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
     else if(link.reverse && link.pct <= 0){
       link.animating = false;
-      link.draw = false; //don't draw links that have been retracted
       link.pct = 0;
       link.reverse = false;
+    }
+    if(link.pct === 0){
+      link.draw = false; //don't draw links that have been retracted
     }
   };
 
