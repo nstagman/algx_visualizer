@@ -16,7 +16,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //hardcoded vars for visualization size
   const nodeSize = 9;
   const lineWidth = 1;
-  const linkLen = nodeSize*2;
+  const linkLen = nodeSize;
   const gridSize = nodeSize + linkLen
   const canvasColr = '#111111';
   const nodeColor = '#000000';
@@ -25,11 +25,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const nodeSolutionColor = '#00FF00';
   const linkColor = '#FF0000';
   const linkCoveredColor = '#CCCCCC';
-  const animationStep = 4;
-  const animationConstWaitTime = 1000/animationStep;
+  const animationStep = 0.01667;
+  const tickRate = 0.0333;
   //component state and reference variables
   let canvas: any;
   let context: CanvasRenderingContext2D;
+  let lastTick: number;
+  let elapsedTicks: number = 0;
   let animationComplete: any | null = null;
   let stepComplete: any | null = null;
   let stepMode: boolean = false;
@@ -57,13 +59,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   onMount(() => {
     initCanvas();
     context = canvas.getContext('2d');
+    lastTick = performance.now();
     updateCanvas();
   });
 
   //canvas main loop - draws and animates the matrix on the canvas
   const updateCanvas = (): void => {
-    updateAnimationStatus();
-    drawMatrix();
+    const now = performance.now()
+    if(now - lastTick > tickRate){
+      elapsedTicks = ((now - lastTick) / tickRate)|0;
+      updateAnimationStatus();
+      drawMatrix();
+    }
+    lastTick = performance.now();
     requestAnimationFrame(updateCanvas);
   };
 
@@ -86,7 +94,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     //shift canvas coordinates to allow negative node columns and rows (headers)
     context.clearRect(0, 0, getWidth(), getHeight());
     context.save()
-    context.translate(5*gridSize, 5*gridSize);
+    context.translate(2*gridSize, 2*gridSize);
 
     //draw each node
     getMatrix().allNodeMap((node: AlgXNode): void => {
@@ -259,10 +267,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //modify link.pct based on the animationStep value
   const updateLinkAnimationLength = (link: LinkDrawInfo): void => {
     if(!link.reverse){
-      link.pct = link.pct + animationStep >= 100 ? 100 : link.pct + animationStep;
+      link.pct = link.pct + elapsedTicks*animationStep >= 100 ? 100 : link.pct + elapsedTicks*animationStep;
     }
     else{
-      link.pct = link.pct - animationStep <= 0 ? 0 : link.pct - animationStep;
+      link.pct = link.pct - elapsedTicks*animationStep <= 0 ? 0 : link.pct - elapsedTicks*animationStep;
     }
   }
 
@@ -312,9 +320,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         await (animationComplete = getExposedPromise());
         animationComplete = null;
       }
-      else{ //wait for a set time instead of the animator before continuing
-        await new Promise((resolve) => {setTimeout(resolve, (update/100)*animationConstWaitTime)});
-      }
       if(stepMode){
         await (stepComplete = getExposedPromise());
         stepComplete = null;
@@ -323,13 +328,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
   const testCB = async (event: MouseEvent): Promise<void> => {
     setMatrix(buildTest());
+    lastTick = performance.now();
     for(const update of getMatrix().animatedAlgXSearch()){
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
         animationComplete = null;
-      }
-      else{ //wait for a set time instead of the animator before continuing
-        await new Promise((resolve) => {setTimeout(resolve, (update/100)*animationConstWaitTime)});
       }
       if(stepMode){
         await (stepComplete = getExposedPromise());
