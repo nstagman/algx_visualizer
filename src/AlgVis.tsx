@@ -14,10 +14,11 @@ type LinkDrawInfo = {
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //hardcoded vars for visualization size
-  const nodeSize = 7;
+  const nodeSize = 9;
   const lineWidth = 1;
   const linkLen = nodeSize*2;
   const gridSize = nodeSize + linkLen
+  const canvasColr = '#111111';
   const nodeColor = '#000000';
   const nodeCoveredColor = '#CCCCCC';
   const nodeFocusedColor = '#FFFF00';
@@ -82,13 +83,16 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   const drawMatrix = (): void => {
+    //shift canvas coordinates to allow negative node columns and rows (headers)
     context.clearRect(0, 0, getWidth(), getHeight());
     context.save()
     context.translate(5*gridSize, 5*gridSize);
+
     //draw each node
     getMatrix().allNodeMap((node: AlgXNode): void => {
       drawNode(node.nodeInfo);
     });
+
     //draw all 4 links of each node
     context.beginPath()
     context.strokeStyle = linkColor;
@@ -109,25 +113,28 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(node.focused){ context.fillStyle = nodeFocusedColor; }
     if(node.solution){ context.fillStyle = nodeSolutionColor; }
     let x, y;
-    [x,y] = nodeCenter(node);
+    [x,y] = nodeTop(node);
+    x -= nodeSize/2;
     context.beginPath();
-    context.arc(x, y, nodeSize/2, 0, 2*Math.PI);
+    context.rect(x, y, nodeSize, nodeSize);
     context.fill();
-    context.strokeStyle = nodeColor;
-    context.beginPath();
-    context.arc(x, y, nodeSize/2, 0, 2*Math.PI);
-    context.stroke();
+    // context.strokeStyle = nodeColor;
+    // context.beginPath();
+    // context.rect(x, y, nodeSize, nodeSize);
+    // context.stroke();
   };
 
   const drawUpLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
-    updateLinkPct(link);
+
+    updateLinkAnimationLength(link);
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
     let currentLength: number; //amount of link to draw this update
     let line1Length: number; //distance between 2 nodes - or distance from node to edge of matrix if wrapping
     let line2Length: number; //used for drawing the second line if the link wraps
+
     //determine line lengths
     wrapping = n2.row > n1.row;
     line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize;
@@ -137,6 +144,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     [x,y] = nodeTop(n1);
     context.moveTo(x, y);
     context.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
+
     //draw second line if wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
@@ -151,7 +159,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawDownLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
-    updateLinkPct(link);
+
+    updateLinkAnimationLength(link);
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -168,6 +177,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     [x,y] = nodeBottom(n1);
     context.moveTo(x, y);
     context.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
+
     //draw second line for wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
@@ -182,7 +192,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawLeftLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
-    updateLinkPct(link);
+
+    updateLinkAnimationLength(link);
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -199,6 +210,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     [x,y] = nodeLeft(n1);
     context.moveTo(x, y);
     context.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
+
     //draw second line for wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
@@ -213,7 +225,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawRightLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
-    updateLinkPct(link);
+
+    updateLinkAnimationLength(link);
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -230,6 +243,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     [x,y] = nodeRight(n1);
     context.moveTo(x, y);
     context.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
+
     //draw second line for wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
@@ -243,7 +257,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   }
 
   //modify link.pct based on the animationStep value
-  const updateLinkPct = (link: LinkDrawInfo): void => {
+  const updateLinkAnimationLength = (link: LinkDrawInfo): void => {
     if(!link.reverse){
       link.pct = link.pct + animationStep >= 100 ? 100 : link.pct + animationStep;
     }
@@ -269,7 +283,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   }
 
-  //translates matrix position to a tuple of canvas coordinates of a node
+  //translates matrix row, col position to a tuple of canvas coordinates for a given node
   const nodeCenter = (node: NodeDrawInfo): [number, number] => {
     return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize/2];
   };
@@ -344,6 +358,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     return promise;
   };
 
+  //return the solidjs component
   return(
     <div>
       <div>
