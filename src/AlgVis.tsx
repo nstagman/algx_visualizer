@@ -19,18 +19,20 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const linkLen = nodeSize;
   const gridSize = nodeSize + linkLen
   const canvasColr = '#111111';
+  // const nodeColor = 'rgba(0, 0, 0, 100)'
   const nodeColor = '#000000';
   const nodeCoveredColor = '#CCCCCC';
   const nodeFocusedColor = '#FFFF00';
   const nodeSolutionColor = '#00FF00';
   const linkColor = '#FF0000';
   const linkCoveredColor = '#CCCCCC';
-  const animationStep = 0.01667;
-  const tickRate = 0.0333;
+  const hz = 60; //target fps
+  const animationStep = 2.5; //% increase in link length per animation tick
+  const tickRate = 1000/hz; //normalized animation update time
   //component state and reference variables
   let canvas: any;
-  let context: CanvasRenderingContext2D;
-  let lastTick: number;
+  let ctx: CanvasRenderingContext2D;
+  let lastUpdate: number;
   let elapsedTicks: number = 0;
   let animationComplete: any | null = null;
   let stepComplete: any | null = null;
@@ -58,21 +60,22 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //solidjs built-in effect, runs one time after the first render of this component
   onMount(() => {
     initCanvas();
-    context = canvas.getContext('2d');
-    lastTick = performance.now();
+    ctx = canvas.getContext('2d');
+    lastUpdate = (performance.now()/100);
     updateCanvas();
   });
 
   //canvas main loop - draws and animates the matrix on the canvas
   const updateCanvas = (): void => {
+    requestAnimationFrame(updateCanvas);
     const now = performance.now()
-    if(now - lastTick > tickRate){
-      elapsedTicks = ((now - lastTick) / tickRate)|0;
+    const dt = (now - lastUpdate);
+    if(dt > tickRate){
+      elapsedTicks = (dt / tickRate)|0;
       updateAnimationStatus();
       drawMatrix();
+      lastUpdate = now;
     }
-    lastTick = performance.now();
-    requestAnimationFrame(updateCanvas);
   };
 
   //resolves animationComplete Promise if no animation is happening
@@ -92,9 +95,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawMatrix = (): void => {
     //shift canvas coordinates to allow negative node columns and rows (headers)
-    context.clearRect(0, 0, getWidth(), getHeight());
-    context.save()
-    context.translate(2*gridSize, 2*gridSize);
+    ctx.clearRect(0, 0, getWidth(), getHeight());
+    ctx.save()
+    ctx.translate(2*gridSize, 2*gridSize);
 
     //draw each node
     getMatrix().allNodeMap((node: AlgXNode): void => {
@@ -102,40 +105,36 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     });
 
     //draw all 4 links of each node
-    context.beginPath()
-    context.strokeStyle = linkColor;
-    context.lineWidth = lineWidth;
+    ctx.beginPath()
+    ctx.strokeStyle = linkColor;
+    ctx.lineWidth = lineWidth;
     getMatrix().allNodeMap((node: AlgXNode): void => {
       drawUpLink(node.linkInfo.up, node.nodeInfo, node.up.nodeInfo);
       drawDownLink(node.linkInfo.down, node.nodeInfo, node.down.nodeInfo);
       drawLeftLink(node.linkInfo.left, node.nodeInfo, node.left.nodeInfo);
       drawRightLink(node.linkInfo.right, node.nodeInfo, node.right.nodeInfo);
     });
-    context.stroke();
-    context.restore();
+    ctx.stroke();
+    ctx.restore();
   };
 
   const drawNode = (node: NodeDrawInfo):void => {
-    context.fillStyle = nodeColor;
-    if(node.covered){ context.fillStyle = nodeCoveredColor; }
-    if(node.focused){ context.fillStyle = nodeFocusedColor; }
-    if(node.solution){ context.fillStyle = nodeSolutionColor; }
+    ctx.fillStyle = nodeColor;
+    if(node.covered){ ctx.fillStyle = nodeCoveredColor; }
+    if(node.focused){ ctx.fillStyle = nodeFocusedColor; }
+    if(node.solution){ ctx.fillStyle = nodeSolutionColor; }
     let x, y;
     [x,y] = nodeTop(node);
     x -= nodeSize/2;
-    context.beginPath();
-    context.rect(x, y, nodeSize, nodeSize);
-    context.fill();
-    // context.strokeStyle = nodeColor;
-    // context.beginPath();
-    // context.rect(x, y, nodeSize, nodeSize);
-    // context.stroke();
+    ctx.beginPath();
+    ctx.rect(x, y, nodeSize, nodeSize);
+    ctx.fill();
   };
 
   const drawUpLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
 
-    updateLinkAnimationLength(link);
+    if(link.animating){ updateLinkAnimationLength(link); }
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -150,8 +149,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to top of node and draw the current length of link upward
     [x,y] = nodeTop(n1);
-    context.moveTo(x, y);
-    context.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
 
     //draw second line if wrapping
     if(currentLength > line1Length && wrapping){
@@ -159,8 +158,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       //move to bottom of matrix and draw remainder of link towards node 2
       [x,y] = nodeBottom(n2);
       y += line2Length;
-      context.moveTo(x, y);
-      context.lineTo(x, y - currentLength);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - currentLength);
     }
     updateLinkAnimationState(link);
   }
@@ -168,7 +167,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const drawDownLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
 
-    updateLinkAnimationLength(link);
+    if(link.animating){ updateLinkAnimationLength(link); }
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -183,8 +182,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to bottom of node and draw the current length of link downward
     [x,y] = nodeBottom(n1);
-    context.moveTo(x, y);
-    context.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
 
     //draw second line for wrapping
     if(currentLength > line1Length && wrapping){
@@ -192,8 +191,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       //move to top of matrix and draw remainder of link towards node 2
       [x,y] = nodeTop(n2);
       y -= line2Length;
-      context.moveTo(x, y);
-      context.lineTo(x, y + currentLength);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + currentLength);
     }
     updateLinkAnimationState(link);
   }
@@ -201,7 +200,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const drawLeftLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
 
-    updateLinkAnimationLength(link);
+    if(link.animating){ updateLinkAnimationLength(link); }
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -216,8 +215,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to left of node and draw the current length of link leftward
     [x,y] = nodeLeft(n1);
-    context.moveTo(x, y);
-    context.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
 
     //draw second line for wrapping
     if(currentLength > line1Length && wrapping){
@@ -225,8 +224,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       //move to right of matrix and draw remainder of link towards node 2
       [x,y] = nodeRight(n2);
       x += line2Length;
-      context.moveTo(x, y);
-      context.lineTo(x - currentLength, y);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - currentLength, y);
     }
     updateLinkAnimationState(link);
   }
@@ -234,7 +233,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const drawRightLink = (link: LinkDrawInfo, n1: NodeDrawInfo, n2: NodeDrawInfo): void => {
     if(!link.draw){ return; }
 
-    updateLinkAnimationLength(link);
+    if(link.animating){ updateLinkAnimationLength(link); }
     let wrapping: boolean; //determine if link wraps around matrix
     let x: number;
     let y: number;
@@ -249,8 +248,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to right of node and draw the current length of link rightward
     [x,y] = nodeRight(n1);
-    context.moveTo(x, y);
-    context.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
 
     //draw second line for wrapping
     if(currentLength > line1Length && wrapping){
@@ -258,8 +257,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       //move to left of matrix and draw remainder of link towards node 2
       [x,y] = nodeLeft(n2);
       x -= line2Length;
-      context.moveTo(x, y);
-      context.lineTo(x + currentLength, y);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + currentLength, y);
     }
     updateLinkAnimationState(link);
   }
@@ -328,7 +327,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
   const testCB = async (event: MouseEvent): Promise<void> => {
     setMatrix(buildTest());
-    lastTick = performance.now();
     for(const update of getMatrix().animatedAlgXSearch()){
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
