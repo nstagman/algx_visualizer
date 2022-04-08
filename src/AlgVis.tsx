@@ -19,10 +19,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const linkLen = nodeSize;
   const gridSize = nodeSize + linkLen
   //colors
-  const canvasColor = 'rgba(255, 255, 255, 1.0)';
+  const canvasColor = 'rgba(0, 0, 0, 1.0)';
   const nodeColor = 'rgba(11, 127, 171, 1.0)';
   const nodeCoveredColor = 'rgba(193, 208, 240, 1.0)';
-  const nodeFocusedColor = 'rgba(255, 225, 75, 0.8)';
+  const nodeFocusedColor = 'rgba(255, 225, 75, 1.0)';
   const nodeSolutionColor = 'rgba(10, 240, 140, 1.0)';
   const linkColor = 'rgba(153, 51, 51, 1.0)';
   const linkCoveredColor = '#CCCCCC';
@@ -51,8 +51,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //reactively set canvas size based on matrix size
   const initCanvas = (): void => {
-    setWidth(gridSize * getMatrix().cols.length + gridSize*10);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*10);
+    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
+    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
   };
 
   //solidjs effect - this causes initCanvas to run anytime a solidjs signal used by initCanvas (getMatrix) changes
@@ -62,8 +62,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //solidjs built-in effect, runs one time after the first render of this component
   onMount(() => {
-    initCanvas();
     ctx = canvas.getContext('2d');
+    initCanvas();
     lastUpdate = (performance.now()/100);
     updateCanvas();
   });
@@ -99,6 +99,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const drawMatrix = (): void => {
     //shift canvas coordinates to allow negative node columns and rows (headers)
     ctx.clearRect(0, 0, getWidth(), getHeight());
+    ctx.fillStyle = canvasColor;
+    ctx.fillRect(0, 0, getWidth(), getHeight());
     ctx.save()
     ctx.translate(2*gridSize, 2*gridSize);
 
@@ -364,7 +366,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //return the solidjs component
   return(
-    <div>
+    <div class='Animator'>
       <div>
         <button onClick={solveCB}> solve </button>
         <button onClick={testCB}> test </button>

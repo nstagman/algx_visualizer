@@ -1,9 +1,10 @@
+import './App.css'
 import { Component, createSignal } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
 import { AlgXAnimator } from './AlgVis';
 
 
-const App: Component = () => {
+const AlgorithmVisualizer: Component = () => {
   let boardSize = 16;
   const [boardState, initBoardState] = createBoardState(boardSize);
 
@@ -30,14 +31,16 @@ const App: Component = () => {
   }
 
   return (
-    <div className='VizApp'>
-      <button onClick={printVals}> print vals </button>
-      <button onClick={fxf}> 4x4 </button>
-      <button onClick={nxn}> 9x9 </button>
-      <PuzzleBoard boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
+    <div className='AlgorithmVisualizer'>
+      <div className='UXBlock'>
+          <button onClick={printVals}> print vals </button>
+          <button onClick={fxf}> 4x4 </button>
+          <button onClick={nxn}> 9x9 </button>
+        <PuzzleBoard boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
+      </div>
       <AlgXAnimator boardState={boardState()} />
     </div>
   );
 };
 
-export default App;
+export default AlgorithmVisualizer;
