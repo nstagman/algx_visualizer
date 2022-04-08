@@ -13,22 +13,23 @@ type LinkDrawInfo = {
 };
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
-  //hardcoded vars for visualization size
+  //matrix size
   const nodeSize = 9;
   const lineWidth = 1;
   const linkLen = nodeSize;
   const gridSize = nodeSize + linkLen
-  const canvasColr = '#111111';
-  // const nodeColor = 'rgba(0, 0, 0, 100)'
-  const nodeColor = '#000000';
-  const nodeCoveredColor = '#CCCCCC';
-  const nodeFocusedColor = '#FFFF00';
-  const nodeSolutionColor = '#00FF00';
-  const linkColor = '#FF0000';
+  //colors
+  const canvasColor = 'rgba(255, 255, 255, 1.0)';
+  const nodeColor = 'rgba(11, 127, 171, 1.0)';
+  const nodeCoveredColor = 'rgba(193, 208, 240, 1.0)';
+  const nodeFocusedColor = 'rgba(255, 225, 75, 0.8)';
+  const nodeSolutionColor = 'rgba(10, 240, 140, 1.0)';
+  const linkColor = 'rgba(153, 51, 51, 1.0)';
   const linkCoveredColor = '#CCCCCC';
+  //animation
   const hz = 60; //target fps
-  const animationStep = 2.5; //% increase in link length per animation tick
   const tickRate = 1000/hz; //normalized animation update time
+
   //component state and reference variables
   let canvas: any;
   let ctx: CanvasRenderingContext2D;
@@ -37,9 +38,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let animationComplete: any | null = null;
   let stepComplete: any | null = null;
   let stepMode: boolean = false;
-  //solidjs reactive signals to update size of canvas
+
+  //solidjs reactive signals for runtime updates
   const [getWidth, setWidth] = createSignal(0);
   const [getHeight, setHeight] = createSignal(0);
+  const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
 
 
   //testing only - getMatrix needs to be passed in as a prop from the user interactive portion
@@ -88,7 +91,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       }
       return false;
     });
-    
+
     if(animating){ return; }
     animationComplete.resolve(true);
   };
@@ -266,10 +269,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //modify link.pct based on the animationStep value
   const updateLinkAnimationLength = (link: LinkDrawInfo): void => {
     if(!link.reverse){
-      link.pct = link.pct + elapsedTicks*animationStep >= 100 ? 100 : link.pct + elapsedTicks*animationStep;
+      link.pct = link.pct + elapsedTicks*getAnimationStep() >= 100 ? 100 : link.pct + elapsedTicks*getAnimationStep();
     }
     else{
-      link.pct = link.pct - elapsedTicks*animationStep <= 0 ? 0 : link.pct - elapsedTicks*animationStep;
+      link.pct = link.pct - elapsedTicks*getAnimationStep() <= 0 ? 0 : link.pct - elapsedTicks*getAnimationStep();
     }
   }
 
