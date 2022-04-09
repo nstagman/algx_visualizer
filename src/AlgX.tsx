@@ -485,6 +485,7 @@ class AlgXMatrix {
           }
         }
       }
+      this.solution.pop();
     }
     this.focusNode(this.root)
     return this.solved;

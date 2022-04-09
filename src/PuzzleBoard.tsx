@@ -85,10 +85,13 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
         break;
       default:
     }
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   return(
-    <div className='PuzzleBoard'
+    <div 
+      className='PuzzleBoard'
       onKeyDown={keyDownCB}
       style={{
         'grid-template-columns': `repeat(${props.dim}, auto)`

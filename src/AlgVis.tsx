@@ -1,6 +1,6 @@
 import './AlgVis.css'
 import { AlgXMatrix, AlgXNode, buildSudMatrix, buildTest, decodeSolution } from './AlgX';
-import { JSXElement, Component, createSignal, createEffect, onMount } from 'solid-js';
+import { JSXElement, Component, createSignal, createEffect, onMount, For } from 'solid-js';
 
 
 type NodeDrawInfo = { row: number, col: number, focused: boolean, covered: boolean, solution: boolean };
@@ -19,6 +19,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const linkLen = nodeSize;
   const gridSize = nodeSize + linkLen
   //colors
+  // const canvasColor = 'rgba(255, 255, 255, 1.0)';
   const canvasColor = 'rgba(0, 0, 0, 1.0)';
   const nodeColor = 'rgba(11, 127, 171, 1.0)';
   const nodeCoveredColor = 'rgba(193, 208, 240, 1.0)';
@@ -39,20 +40,22 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let stepComplete: any | null = null;
   let stepMode: boolean = false;
 
-  //solidjs reactive signals for runtime updates
-  const [getWidth, setWidth] = createSignal(0);
-  const [getHeight, setHeight] = createSignal(0);
-  const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
-
 
   //testing only - getMatrix needs to be passed in as a prop from the user interactive portion
   const [getMatrix, setMatrix] = createSignal(buildTest());
 
 
+  //solidjs reactive signals for runtime updates
+  const [getWidth, setWidth] = createSignal(0);
+  const [getHeight, setHeight] = createSignal(0);
+  const [getSolution, setSolution] = createSignal(getMatrix().solution, {equals: false});
+  const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
+
   //reactively set canvas size based on matrix size
   const initCanvas = (): void => {
     setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
     setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
+    setSolution(getMatrix().solution);
   };
 
   //solidjs effect - this causes initCanvas to run anytime a solidjs signal used by initCanvas (getMatrix) changes
@@ -333,6 +336,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const testCB = async (event: MouseEvent): Promise<void> => {
     setMatrix(buildTest());
     for(const update of getMatrix().animatedAlgXSearch()){
+      setSolution((getMatrix().solution));
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
         animationComplete = null;
@@ -342,7 +346,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         stepComplete = null;
       }
     }
-    console.log(getMatrix().solution)
+    console.log(getSolution())
   };
   const stepCB = (event: MouseEvent): void => {
     if(stepComplete !== null){ stepComplete.resolve(true); }
@@ -366,12 +370,15 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //return the solidjs component
   return(
-    <div class='Animator'>
+    <div className='Animator'>
       <div>
         <button onClick={solveCB}> solve </button>
         <button onClick={testCB}> test </button>
         <button onClick={stepCB}> step </button>
         <button onClick={enableStepModeCB}> stepMode </button>
+      </div>
+      <div className='solution'>
+        {getSolution().toString()}
       </div>
       <canvas ref={canvas} width={getWidth()} height={getHeight()}/>
     </div>
