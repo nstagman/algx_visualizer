@@ -587,6 +587,19 @@ const buildSudMatrix = (puzzle: Array<number>): AlgXMatrix => {
   return matrix;
 };
 
+const buildMatrix = (mat: Array<Number>, numRows: number, numCols: number): AlgXMatrix => {
+  const matrix = new AlgXMatrix(numRows, numCols);
+  let colNodes: Array<number>;
+  for(let i=0; i<mat.length; i++){
+    colNodes = [];
+    for(let j=0; j<numCols; j++){
+      if(mat[i] > 0) { colNodes.push(j); }
+    }
+    matrix.insertRow(i, colNodes);
+  }
+  return matrix;
+};
+
 const decodeSolution = (solution: Array<number>): Array<number> => {
   let solvedPuzzle: Array<number> = [];
   const dim = Math.sqrt(solution.length);
@@ -598,4 +611,4 @@ const decodeSolution = (solution: Array<number>): Array<number> => {
 };
 //#endregion
 
-export { AlgXMatrix, AlgXNode, buildSudMatrix, buildTest, decodeSolution }
+export { AlgXMatrix, AlgXNode, buildSudMatrix, buildMatrix, buildTest, decodeSolution }

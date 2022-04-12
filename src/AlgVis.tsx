@@ -40,22 +40,17 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let stepComplete: any | null = null;
   let stepMode: boolean = false;
 
-
-  //testing only - getMatrix needs to be passed in as a prop from the user interactive portion
-  const [getMatrix, setMatrix] = createSignal(buildTest());
-
-
   //solidjs reactive signals for runtime updates
   const [getWidth, setWidth] = createSignal(0);
   const [getHeight, setHeight] = createSignal(0);
-  const [getSolution, setSolution] = createSignal(getMatrix().solution, {equals: false});
+  const [getSolution, setSolution] = createSignal(props.getMatrix.solution, {equals: false});
   const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
 
   //reactively set canvas size based on matrix size
   const initCanvas = (): void => {
-    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
-    setSolution(getMatrix().solution);
+    setWidth(gridSize * props.getMatrix.cols.length + gridSize*2.5);
+    setHeight(gridSize * props.getMatrix.rows.length + gridSize*2.5);
+    setSolution(props.getMatrix.solution);
   };
 
   //solidjs effect - this causes initCanvas to run anytime a solidjs signal used by initCanvas (getMatrix) changes
@@ -88,7 +83,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const updateAnimationStatus = (): void => {
     if(animationComplete === null) { return; }
     //check if any link is currently animating
-    const animating = getMatrix().allNodeMap((node: AlgXNode): boolean => {
+    const animating = props.getMatrix.allNodeMap((node: AlgXNode): boolean => {
       for(const link of Object.values(node.linkInfo)){
         if(link.animating){ return true; }
       }
@@ -108,7 +103,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.translate(2*gridSize, 2*gridSize);
 
     //draw each node
-    getMatrix().allNodeMap((node: AlgXNode): void => {
+    props.getMatrix.allNodeMap((node: AlgXNode): void => {
       drawNode(node.nodeInfo);
     });
 
@@ -116,7 +111,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.beginPath()
     ctx.strokeStyle = linkColor;
     ctx.lineWidth = lineWidth;
-    getMatrix().allNodeMap((node: AlgXNode): void => {
+    props.getMatrix.allNodeMap((node: AlgXNode): void => {
       drawUpLink(node.linkInfo.up, node.nodeInfo, node.up.nodeInfo);
       drawDownLink(node.linkInfo.down, node.nodeInfo, node.down.nodeInfo);
       drawLeftLink(node.linkInfo.left, node.nodeInfo, node.left.nodeInfo);
@@ -153,7 +148,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     //determine line lengths
     wrapping = n2.row > n1.row;
     line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize;
-    line2Length = wrapping ? gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize: 0;
+    line2Length = wrapping ? gridSize*(props.getMatrix.rows.length - n2.row) - 0.5*gridSize: 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to top of node and draw the current length of link upward
     [x,y] = nodeTop(n1);
@@ -185,7 +180,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     wrapping = n2.row < n1.row;
-    line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize;
+    line1Length = wrapping ? gridSize*(props.getMatrix.rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize;
     line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to bottom of node and draw the current length of link downward
@@ -219,7 +214,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     //determine line lengths
     wrapping = n2.col > n1.col;
     line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize;
-    line2Length = wrapping ? gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize : 0;
+    line2Length = wrapping ? gridSize*(props.getMatrix.cols.length - n2.col) - 0.5*gridSize : 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to left of node and draw the current length of link leftward
     [x,y] = nodeLeft(n1);
@@ -251,7 +246,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     wrapping = n2.col < n1.col;
-    line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize;
+    line1Length = wrapping ? gridSize*(props.getMatrix.cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize;
     line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to right of node and draw the current length of link rightward
@@ -317,12 +312,12 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
-    let puzzle: Array<number> = [];
-    for(const cell of props.boardState){
-      puzzle.push(cell.getValue());
-    }
-    setMatrix(buildSudMatrix(puzzle));
-    for(const update of getMatrix().animatedAlgXSearch()){
+    // let puzzle: Array<number> = [];
+    // for(const cell of props.boardState){
+    //   puzzle.push(cell.getValue());
+    // }
+    // setMatrix(buildSudMatrix(puzzle));
+    for(const update of props.getMatrix.animatedAlgXSearch()){
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
         animationComplete = null;
@@ -334,9 +329,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
   const testCB = async (event: MouseEvent): Promise<void> => {
-    setMatrix(buildTest());
-    for(const update of getMatrix().animatedAlgXSearch()){
-      setSolution((getMatrix().solution));
+    // setMatrix(buildTest());
+    for(const update of props.getMatrix.animatedAlgXSearch()){
+      setSolution((props.getMatrix.solution));
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
         animationComplete = null;
