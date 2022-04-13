@@ -7,58 +7,39 @@ import { buildMatrix, buildSudMatrix } from './AlgX';
 
 
 const AlgorithmVisualizer: Component = () => {
-  const [boardSize, setBoardSize] = createSignal(0);
+  const [boardSize, setBoardSize] = createSignal(16);
   const [boardState, initBoardState] = createBoardState(boardSize());
   const [rows, setRows] = createSignal(0);
   const [cols, setCols] = createSignal(0);
   const [customMatrixState, initCustomMatrixState] = createMatrixState(rows() * cols());
-  const [algXMatrix, initAlgXMatrix] = createSignal();
 
-  function initApp(){
-    setRows(6);
-    setCols(7);
-    initCustomMatrixState(6*7);
-    customMatrixState()[0].setValue(1)
-    customMatrixState()[4].setValue(1)
-    customMatrixState()[7].setValue(1)
-    customMatrixState()[8].setValue(1)
-    customMatrixState()[11].setValue(1)
-    customMatrixState()[18].setValue(1)
-    customMatrixState()[19].setValue(1)
-    customMatrixState()[21].setValue(1)
-    customMatrixState()[24].setValue(1)
-    customMatrixState()[26].setValue(1)
-    customMatrixState()[27].setValue(1)
-    customMatrixState()[30].setValue(1)
-    customMatrixState()[31].setValue(1)
-    customMatrixState()[34].setValue(1)
-    customMatrixState()[35].setValue(1)
-    customMatrixState()[37].setValue(1)
-    customMatrixState()[41].setValue(1)
-    console.log(customMatrixState().map(
-      (idx) => { return idx.getValue(); }
-    ))
-    initAlgXMatrix(buildMatrix(customMatrixState().map(
-      (idx) => { return idx.getValue(); }
-    ),
-    rows(),
-    cols()
-    ))
-  }
-
-  initApp();
-  
-  // onMount(() => {
+  // function initApp(){
   //   setRows(6);
   //   setCols(7);
   //   initCustomMatrixState(6*7);
-  //   initAlgXMatrix(buildMatrix(customMatrixState().map(
+  //   customMatrixState()[0].setValue(1)
+  //   customMatrixState()[4].setValue(1)
+  //   customMatrixState()[7].setValue(1)
+  //   customMatrixState()[8].setValue(1)
+  //   customMatrixState()[11].setValue(1)
+  //   customMatrixState()[18].setValue(1)
+  //   customMatrixState()[19].setValue(1)
+  //   customMatrixState()[21].setValue(1)
+  //   customMatrixState()[24].setValue(1)
+  //   customMatrixState()[26].setValue(1)
+  //   customMatrixState()[27].setValue(1)
+  //   customMatrixState()[30].setValue(1)
+  //   customMatrixState()[31].setValue(1)
+  //   customMatrixState()[34].setValue(1)
+  //   customMatrixState()[35].setValue(1)
+  //   customMatrixState()[37].setValue(1)
+  //   customMatrixState()[41].setValue(1)
+  //   const mat: Array<number> = customMatrixState().map(
   //     (idx) => { return idx.getValue(); }
-  //   ),
-  //   rows(),
-  //   cols()
-  //   ))
-  // });
+  //   );
+  // }
+
+  // initApp();
 
   function fxf(){
     if(boardSize() !== 16) {
@@ -92,7 +73,7 @@ const AlgorithmVisualizer: Component = () => {
           : <CustomMatrix matrixState={customMatrixState()} rows={rows()} cols={cols()}/>
         }
       </div>
-      <AlgXAnimator getMatrix={algXMatrix()} />
+      <AlgXAnimator UIState={boardState()} />
     </div>
   );
 };

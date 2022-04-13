@@ -1,5 +1,5 @@
 import './AlgVis.css'
-import { AlgXMatrix, AlgXNode, buildSudMatrix, buildTest, decodeSolution } from './AlgX';
+import { AlgXMatrix, AlgXNode, buildMatrix, buildSudMatrix, buildTest, decodeSolution } from './AlgX';
 import { JSXElement, Component, createSignal, createEffect, onMount, For } from 'solid-js';
 
 
@@ -43,12 +43,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //solidjs reactive signals for runtime updates
   const [getWidth, setWidth] = createSignal(0);
   const [getHeight, setHeight] = createSignal(0);
-  const [getSolution, setSolution] = createSignal(props.getMatrix.solution, {equals: false});
+  const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0,0,0,], 2, 2));
+  const [getSolution, setSolution] = createSignal({equals: false});
   const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
 
   //reactively set canvas size based on matrix size
   const initCanvas = (): void => {
-    setWidth(gridSize * props.getMatrix.cols.length + gridSize*2.5);
+    setMatrix(buildSudMatrix(props.UIState.map((idx: any) => {return idx.getValue(); })));
+    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
     setHeight(gridSize * props.getMatrix.rows.length + gridSize*2.5);
     setSolution(props.getMatrix.solution);
   };
@@ -62,7 +64,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   onMount(() => {
     ctx = canvas.getContext('2d');
     initCanvas();
-    lastUpdate = (performance.now()/100);
+    lastUpdate = performance.now();
     updateCanvas();
   });
 
