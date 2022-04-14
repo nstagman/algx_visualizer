@@ -10,33 +10,31 @@ const AlgorithmVisualizer: Component = () => {
   const [cols, setCols] = createSignal(4);
   const [boardState, initBoardState] = createBoardState(boardSize());
 
-  // function initApp(){
-  //   setRows(6);
-  //   setCols(7);
-  //   initCustomMatrixState(6*7);
-  //   customMatrixState()[0].setValue(1)
-  //   customMatrixState()[4].setValue(1)
-  //   customMatrixState()[7].setValue(1)
-  //   customMatrixState()[8].setValue(1)
-  //   customMatrixState()[11].setValue(1)
-  //   customMatrixState()[18].setValue(1)
-  //   customMatrixState()[19].setValue(1)
-  //   customMatrixState()[21].setValue(1)
-  //   customMatrixState()[24].setValue(1)
-  //   customMatrixState()[26].setValue(1)
-  //   customMatrixState()[27].setValue(1)
-  //   customMatrixState()[30].setValue(1)
-  //   customMatrixState()[31].setValue(1)
-  //   customMatrixState()[34].setValue(1)
-  //   customMatrixState()[35].setValue(1)
-  //   customMatrixState()[37].setValue(1)
-  //   customMatrixState()[41].setValue(1)
-  //   const mat: Array<number> = customMatrixState().map(
-  //     (idx) => { return idx.getValue(); }
-  //   );
-  // }
+  function initApp(){
+    setRows(6);
+    setCols(7);
+    setBoardSize(0);
+    initBoardState(rows() * cols());
+    boardState()[0].setValue(1);
+    boardState()[3].setValue(1);
+    boardState()[6].setValue(1);
+    boardState()[7].setValue(1);
+    boardState()[10].setValue(1);
+    boardState()[17].setValue(1);
+    boardState()[18].setValue(1);
+    boardState()[20].setValue(1);
+    boardState()[23].setValue(1);
+    boardState()[25].setValue(1);
+    boardState()[26].setValue(1);
+    boardState()[29].setValue(1);
+    boardState()[30].setValue(1);
+    boardState()[33].setValue(1);
+    boardState()[34].setValue(1);
+    boardState()[36].setValue(1);
+    boardState()[41].setValue(1);
+  }
 
-  // initApp();
+  initApp();
 
   function fxf(){
     if(boardSize() !== 16) {
@@ -79,7 +77,12 @@ const AlgorithmVisualizer: Component = () => {
             enableInput={true}
           />
       </div>
-      <AlgXAnimator UIState={boardState()} />
+      <AlgXAnimator 
+        UIState={boardState()}
+        sudoku={boardSize() > 0}
+        rows={rows()}
+        cols={cols()}
+      />
     </div>
   );
 };

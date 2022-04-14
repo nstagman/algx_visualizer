@@ -10,9 +10,9 @@
     all: unset;
     user-select: none;
     margin: 1px;
-    width: 2rem;
-    height: 2rem;
-    line-height: 2rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
     text-align: center;
     background-color: whitesmoke;
 }

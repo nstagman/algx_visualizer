@@ -75,10 +75,10 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
     const sqID = Number((event.target as HTMLInputElement).id.replace('sq', ''));
     switch(arrowKeys.indexOf(event.key)){
       case 0:
-        if(sqID - props.rows >= 0){ document.getElementById('sq' + String(sqID - props.rows))?.focus(); }
+        if(sqID - props.rows >= 0){ document.getElementById('sq' + String(sqID - props.cols))?.focus(); }
         break;
       case 1:
-        if(sqID + props.cols-1 < props.rows * props.cols){ document.getElementById('sq' + String(sqID + props.rows))?.focus(); }
+        if(sqID + props.cols-1 < props.rows * props.cols){ document.getElementById('sq' + String(sqID + props.cols))?.focus(); }
         break;
       case 2:
         if(sqID > 0){ document.getElementById('sq' + String(sqID - 1))?.focus(); }

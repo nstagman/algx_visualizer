@@ -417,11 +417,6 @@ class AlgXMatrix {
       if(this.solved){ break; }
 
       // -- Uncover Partial Solution
-      //remove solution flag from partial solution
-      // for(const node of this.rows[solSearchNode.row].iterateRight(false)){
-      //   node.nodeInfo.solution = false;
-      // }
-
       //for each node in selected row
       for(const node of solSearchNode.left.iterateLeft(false)){
         if(node.col < 0){ continue; }
@@ -515,35 +510,6 @@ class AlgXMatrix {
   }
 }
 
-const buildTest = (): AlgXMatrix => {
-  const matrix = new AlgXMatrix(6, 7);
-  matrix.insertRow(0, [0,3,6]);
-  matrix.insertRow(1, [0,3]);
-  matrix.insertRow(2, [3,4,6]);
-  matrix.insertRow(3, [2,4,5]);
-  matrix.insertRow(4, [1,2,5,6]);
-  matrix.insertRow(5, [1,6]);
-  // matrix.addNode(0,0);
-  // matrix.addNode(0,3);
-  // matrix.addNode(0,6);
-  // matrix.addNode(1,0);
-  // matrix.addNode(1,3);
-  // matrix.addNode(2,3);
-  // matrix.addNode(2,4);
-  // matrix.addNode(2,6);
-  // matrix.addNode(3,2);
-  // matrix.addNode(3,4);
-  // matrix.addNode(3,5);
-  // matrix.addNode(4,1);
-  // matrix.addNode(4,2);
-  // matrix.addNode(4,5);
-  // matrix.addNode(4,6);
-  // matrix.addNode(5,1);
-  // matrix.addNode(5,6);
-  return matrix;
-};
-
-//#region Sudoku Specific Functions
 //constraint functions - returns column of node for a constraint when given the row and puzzle dimension
 const oneConstraint = (row: number, dim: number): number => {
   return (row/dim)|0;
@@ -559,6 +525,7 @@ const boxConstraint = (row: number, dim: number): number => {
     (((row/(Math.sqrt(dim)*dim))|0) % Math.sqrt(dim)) * dim + (row % dim);
 };
 
+//convert array of ints representing a sudoku puzzle into AlgXMatrix
 const buildSudMatrix = (puzzle: Array<number>): AlgXMatrix => {
   const dim: number = Math.sqrt(puzzle.length);
   const numRows = dim*dim*dim;
@@ -587,19 +554,21 @@ const buildSudMatrix = (puzzle: Array<number>): AlgXMatrix => {
   return matrix;
 };
 
-const buildMatrix = (mat: Array<Number>, numRows: number, numCols: number): AlgXMatrix => {
+//convert array of numbers representing a binary matrix into an AlgXMatrix
+const buildMatrix = (matrixData: Array<Number>, numRows: number, numCols: number): AlgXMatrix => {
   const matrix = new AlgXMatrix(numRows, numCols);
   let colNodes: Array<number>;
   for(let i=0; i<numRows; i++){
     colNodes = [];
     for(let j=0; j<numCols; j++){
-      if(mat[i*numRows+j] > 0) { colNodes.push(j); }
+      if(matrixData[i*numCols+j] > 0) { colNodes.push(j); }
     }
     if(colNodes.length > 0){ matrix.insertRow(i, colNodes); }
   }
   return matrix;
 };
 
+//returns array representing a sudoku board from a given AlgXMatrix solution
 const decodeSolution = (solution: Array<number>): Array<number> => {
   let solvedPuzzle: Array<number> = [];
   const dim = Math.sqrt(solution.length);
@@ -609,6 +578,5 @@ const decodeSolution = (solution: Array<number>): Array<number> => {
   }
   return solvedPuzzle;
 };
-//#endregion
 
-export { AlgXMatrix, AlgXNode, buildSudMatrix, buildMatrix, buildTest, decodeSolution }
+export { AlgXMatrix, AlgXNode, buildSudMatrix, buildMatrix, decodeSolution }

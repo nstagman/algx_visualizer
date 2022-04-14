@@ -1,5 +1,5 @@
 import './AlgVis.css'
-import { AlgXMatrix, AlgXNode, buildMatrix, buildSudMatrix, buildTest, decodeSolution } from './AlgX';
+import { AlgXMatrix, AlgXNode, buildMatrix, buildSudMatrix, decodeSolution } from './AlgX';
 import { JSXElement, Component, createSignal, createEffect, onMount, For } from 'solid-js';
 
 
@@ -41,8 +41,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let stepMode: boolean = false;
 
   //solidjs reactive signals for runtime updates
-  const [getWidth, setWidth] = createSignal(0);
-  const [getHeight, setHeight] = createSignal(0);
+  const [getWidth, setWidth] = createSignal(1);
+  const [getHeight, setHeight] = createSignal(1);
   const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
   const [getSolution, setSolution] = createSignal([0], {equals: false});
   const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
@@ -62,7 +62,12 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //solidjs built-in effect, runs one time after the first render of this component
   onMount(() => {
     ctx = canvas.getContext('2d');
-    setMatrix(buildSudMatrix(props.UIState.map((idx: any) => {return idx.getValue();})));
+    let matrixData: Array<number> = [];
+    for(let i=0; i<props.UIState.length; i++){
+      matrixData.push(props.UIState[i].getValue());
+    }
+    if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
+    else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
     initCanvas();
     lastUpdate = performance.now();
     updateCanvas();
@@ -190,7 +195,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.moveTo(x, y);
     ctx.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
 
-    //draw second line for wrapping
+    //draw second line if wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
       //move to top of matrix and draw remainder of link towards node 2
@@ -223,7 +228,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.moveTo(x, y);
     ctx.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
 
-    //draw second line for wrapping
+    //draw second line if wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
       //move to right of matrix and draw remainder of link towards node 2
@@ -256,7 +261,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.moveTo(x, y);
     ctx.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
 
-    //draw second line for wrapping
+    //draw second line if wrapping
     if(currentLength > line1Length && wrapping){
       currentLength -= line1Length; //remove already drawn portion of length
       //move to left of matrix and draw remainder of link towards node 2
@@ -314,11 +319,12 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
-    let puzzle: Array<number> = [];
-    for(const cell of props.UIState){
-      puzzle.push(cell.getValue());
+    let matrixData: Array<number> = [];
+    for(let i=0; i<props.UIState.length; i++){
+      matrixData.push(props.UIState[i].getValue());
     }
-    setMatrix(buildSudMatrix(puzzle));
+    if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
+    else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
     for(const update of getMatrix().animatedAlgXSearch()){
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
