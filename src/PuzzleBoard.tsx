@@ -29,17 +29,18 @@ function createBoardState(size?: number): [() => PuzzleSquareState[], (size: num
 /**Component for a square in the puzzle.  Requires prop: PuzzleSquareState Object */
 const PuzzleSquare: Component<any> = (props: any): JSXElement => {
   //determine if this square needs increased right or bottom margins
-  const rmargin = (props.squareNum + 1) % Math.sqrt(props.maxVal) === 0;
-  const bmargin = (props.squareNum + props.maxVal) % (props.maxVal * Math.sqrt(props.maxVal)) < props.maxVal;
+  const rmargin = props.sudoku && (props.squareNum + 1) % Math.sqrt(props.maxVal) === 0;
+  const bmargin = props.sudoku && (props.squareNum + props.maxVal) % (props.maxVal * Math.sqrt(props.maxVal)) < props.maxVal;
 
   //create array of allowable numbers in this puzzle
   const allowableKeys: Array<number> = [];
-  for(let i=1; i <= props.maxVal; i++){
+  for(let i=0; i <= props.maxVal; i++){
     allowableKeys.push(i);
   }
 
   //filter input for allowable numbers
   const keyDownCB = (event: KeyboardEvent) => {
+    if(!props.enableInput) { return; }
     if(allowableKeys.includes(Number(event.key), 0)){
       props.setValue(Number(event.key)); //set value to key if in allowableKeys
     }
@@ -51,7 +52,7 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
   return(
     <div
       id={'sq' + props.squareNum}
-      className={'PuzzleSquare'}
+      className={props.sudoku ? 'PuzzleSquare' : 'MatrixIndex'}
       tabIndex={0} //makes focusable
       onKeyDown={keyDownCB}
       style={{
@@ -59,7 +60,9 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
         "margin-bottom": `${bmargin ? "2px" : "0px"}`
       }}
     >
-      {props.getValue() > 0 ? props.getValue() : '\u00A0' /*render unicode nbsp character instead of 0*/}
+      {props.sudoku
+      ? props.getValue() > 0 && props.sudoku ? props.getValue() : '\u00A0'
+      : props.getValue()}
     </div>
   );
 };
@@ -72,16 +75,16 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
     const sqID = Number((event.target as HTMLInputElement).id.replace('sq', ''));
     switch(arrowKeys.indexOf(event.key)){
       case 0:
-        if(sqID - props.dim >= 0){ document.getElementById('sq' + String(sqID - props.dim))?.focus(); }
+        if(sqID - props.rows >= 0){ document.getElementById('sq' + String(sqID - props.rows))?.focus(); }
         break;
       case 1:
-        if(sqID + props.dim < props.dim * props.dim){ document.getElementById('sq' + String(sqID + props.dim))?.focus(); }
+        if(sqID + props.cols-1 < props.rows * props.cols){ document.getElementById('sq' + String(sqID + props.rows))?.focus(); }
         break;
       case 2:
         if(sqID > 0){ document.getElementById('sq' + String(sqID - 1))?.focus(); }
         break;
       case 3:
-        if(sqID <= props.dim * props.dim){ document.getElementById('sq' + String(sqID + 1))?.focus(); }
+        if(sqID <= props.rows * props.cols){ document.getElementById('sq' + String(sqID + 1))?.focus(); }
         break;
       default:
     }
@@ -91,14 +94,20 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
 
   return(
     <div 
-      className='PuzzleBoard'
+      className={props.sudoku ? 'PuzzleBoard' : 'CustomMatrix'}
       onKeyDown={keyDownCB}
       style={{
-        'grid-template-columns': `repeat(${props.dim}, auto)`
+        'grid-template-columns': `repeat(${props.cols}, auto)`
       }}
     >
       <For each={props.boardState}>
-        { (squareState) => <PuzzleSquare {...squareState} maxVal={props.dim}/>}
+        { (squareState) => <PuzzleSquare 
+                            {...squareState} 
+                            sudoku={props.sudoku} 
+                            maxVal={props.sudoku ? props.rows : 1} 
+                            enableInput={props.enableInput}
+                            />
+        }
       </For>
     </div>
   );

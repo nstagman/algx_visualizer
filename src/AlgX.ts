@@ -590,12 +590,12 @@ const buildSudMatrix = (puzzle: Array<number>): AlgXMatrix => {
 const buildMatrix = (mat: Array<Number>, numRows: number, numCols: number): AlgXMatrix => {
   const matrix = new AlgXMatrix(numRows, numCols);
   let colNodes: Array<number>;
-  for(let i=0; i<mat.length; i++){
+  for(let i=0; i<numRows; i++){
     colNodes = [];
     for(let j=0; j<numCols; j++){
-      if(mat[i] > 0) { colNodes.push(j); }
+      if(mat[i*numRows+j] > 0) { colNodes.push(j); }
     }
-    matrix.insertRow(i, colNodes);
+    if(colNodes.length > 0){ matrix.insertRow(i, colNodes); }
   }
   return matrix;
 };

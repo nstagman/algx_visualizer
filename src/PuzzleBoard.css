@@ -20,3 +20,26 @@
 .PuzzleSquare:focus {
     background-color:goldenrod;
 }
+
+.CustomMatrix {
+    display: grid;
+    margin: 1rem;
+    padding: 0px 1px 1px 0px;
+    width: fit-content;
+    background-color: black;
+}
+
+.MatrixIndex {
+    all: unset;
+    user-select: none;
+    margin: 1px;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    text-align: center;
+    background-color: whitesmoke;
+}
+
+.MatrixIndex:focus {
+    background-color:goldenrod;
+}

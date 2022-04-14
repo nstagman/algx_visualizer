@@ -1,17 +1,14 @@
 import './App.css'
 import { Component, createSignal, onMount } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
-import { CustomMatrix, createMatrixState } from './CustomMatrix';
 import { AlgXAnimator } from './AlgVis';
-import { buildMatrix, buildSudMatrix } from './AlgX';
 
 
 const AlgorithmVisualizer: Component = () => {
   const [boardSize, setBoardSize] = createSignal(16);
+  const [rows, setRows] = createSignal(4);
+  const [cols, setCols] = createSignal(4);
   const [boardState, initBoardState] = createBoardState(boardSize());
-  const [rows, setRows] = createSignal(0);
-  const [cols, setCols] = createSignal(0);
-  const [customMatrixState, initCustomMatrixState] = createMatrixState(rows() * cols());
 
   // function initApp(){
   //   setRows(6);
@@ -44,6 +41,8 @@ const AlgorithmVisualizer: Component = () => {
   function fxf(){
     if(boardSize() !== 16) {
       setBoardSize(16);
+      setRows(4);
+      setCols(4);
       initBoardState(16);
     }
   }
@@ -51,6 +50,8 @@ const AlgorithmVisualizer: Component = () => {
   function nxn(){
     if(boardSize() !== 81){
       setBoardSize(81);
+      setRows(9);
+      setCols(9);
       initBoardState(81);
     }
   }
@@ -58,7 +59,9 @@ const AlgorithmVisualizer: Component = () => {
   function customMatrix(){
     if(boardSize() !== 0){
       setBoardSize(0);
-      initCustomMatrixState(rows() * cols());
+      setRows(6);
+      setCols(7);
+      initBoardState(rows() * cols());
     }
   }
 
@@ -68,10 +71,13 @@ const AlgorithmVisualizer: Component = () => {
           <button onClick={customMatrix}> custom </button>
           <button onClick={fxf}> 4x4 </button>
           <button onClick={nxn}> 9x9 </button>
-        {boardSize() != 0
-          ? <PuzzleBoard boardState={boardState()} dim={Math.sqrt(boardState().length)}/>
-          : <CustomMatrix matrixState={customMatrixState()} rows={rows()} cols={cols()}/>
-        }
+          <PuzzleBoard
+            boardState={boardState()}
+            sudoku={boardSize() > 0}
+            rows={rows()}
+            cols={cols()}
+            enableInput={true}
+          />
       </div>
       <AlgXAnimator UIState={boardState()} />
     </div>
