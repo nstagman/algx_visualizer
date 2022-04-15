@@ -6,15 +6,18 @@ import { JSXElement, Component, For, createSignal } from 'solid-js';
 type PuzzleSquareState = {
   squareNum: number,
   getValue: () => number,
-  setValue: (v: any) => number
+  setValue: (v: number) => number,
+  getComputed: () => boolean,
+  setComputed: (v: boolean) => boolean
 };
 
 /**Returns array of PuzzleBoardState with specified size*/
 function _initBoardState(size: number) {
   const puzzleBoardState: Array<PuzzleSquareState> = [];
   for(let i=0; i<size; i++){
-    const [g, s] = createSignal(0);
-    puzzleBoardState.push({squareNum: i, getValue: g, setValue: s});
+    const [gv, sv] = createSignal(0);
+    const [gc, sc] = createSignal(false);
+    puzzleBoardState.push({squareNum: i, getValue: gv, setValue: sv, getComputed: gc, setComputed: sc});
   }
   return puzzleBoardState;
 }
@@ -43,9 +46,11 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
     if(!props.enableInput) { return; }
     if(allowableKeys.includes(Number(event.key), 0)){
       props.setValue(Number(event.key)); //set value to key if in allowableKeys
+      props.setComputed(false);
     }
     else if(event.key === 'Delete' || event.key === 'Backspace'){
       props.setValue(0); //no number is represented with a value of 0
+      props.setComputed(false);
     }
   };
 
@@ -60,8 +65,9 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
         "margin-bottom": `${bmargin ? "2px" : "0px"}`
       }}
     >
+      {/*write the unicode nbsp character instead of 0 for sudoku puzzles*/}
       {props.sudoku
-      ? props.getValue() > 0 && props.sudoku ? props.getValue() : '\u00A0'
+      ? props.getValue() > 0 ? props.getValue() : '\u00A0'
       : props.getValue()}
     </div>
   );

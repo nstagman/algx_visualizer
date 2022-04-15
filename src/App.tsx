@@ -1,19 +1,19 @@
 import './App.css'
-import { Component, createSignal, onMount } from 'solid-js';
+import { Component, createSignal, onMount, batch } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
 import { AlgXAnimator } from './AlgVis';
 
 
 const AlgorithmVisualizer: Component = () => {
-  const [boardSize, setBoardSize] = createSignal(16);
-  const [rows, setRows] = createSignal(4);
-  const [cols, setCols] = createSignal(4);
-  const [boardState, initBoardState] = createBoardState(boardSize());
+  const [isSudoku, setIsSudoku] = createSignal(false);
+  const [rows, setRows] = createSignal(6);
+  const [cols, setCols] = createSignal(7);
+  const [boardState, initBoardState] = createBoardState(rows() * cols());
 
-  function initApp(){
+  const initApp = () => {
     setRows(6);
     setCols(7);
-    setBoardSize(0);
+    setIsSudoku(false);
     initBoardState(rows() * cols());
     boardState()[0].setValue(1);
     boardState()[3].setValue(1);
@@ -32,36 +32,43 @@ const AlgorithmVisualizer: Component = () => {
     boardState()[34].setValue(1);
     boardState()[36].setValue(1);
     boardState()[41].setValue(1);
-  }
+  };
 
-  initApp();
-
-  function fxf(){
-    if(boardSize() !== 16) {
-      setBoardSize(16);
-      setRows(4);
-      setCols(4);
-      initBoardState(16);
+  const fxf = () => {
+    if(!isSudoku() || rows() !== 4) {
+      batch(() => {
+        setIsSudoku(true);
+        setRows(4);
+        setCols(4);
+        initBoardState(16);
+      });
     }
-  }
+  };
 
-  function nxn(){
-    if(boardSize() !== 81){
-      setBoardSize(81);
-      setRows(9);
-      setCols(9);
-      initBoardState(81);
+  const nxn = () => {
+    if(!isSudoku() || rows() !== 9){
+      batch(() => {
+        setIsSudoku(true);
+        setRows(9);
+        setCols(9);
+        initBoardState(81);
+      });
     }
-  }
+  };
 
-  function customMatrix(){
-    if(boardSize() !== 0){
-      setBoardSize(0);
+  const customMatrix = () => {
+    if(isSudoku()){
       setRows(6);
       setCols(7);
-      initBoardState(rows() * cols());
+      batch(() => {
+        setIsSudoku(false);
+        initBoardState(rows() * cols());
+      });
     }
-  }
+  };
+
+  
+  initApp();
 
   return (
     <div className='VisualizerApp'>
@@ -71,7 +78,7 @@ const AlgorithmVisualizer: Component = () => {
           <button onClick={nxn}> 9x9 </button>
           <PuzzleBoard
             boardState={boardState()}
-            sudoku={boardSize() > 0}
+            sudoku={isSudoku()}
             rows={rows()}
             cols={cols()}
             enableInput={true}
@@ -79,7 +86,7 @@ const AlgorithmVisualizer: Component = () => {
       </div>
       <AlgXAnimator 
         UIState={boardState()}
-        sudoku={boardSize() > 0}
+        sudoku={isSudoku()}
         rows={rows()}
         cols={cols()}
       />

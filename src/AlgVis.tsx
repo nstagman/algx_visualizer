@@ -44,34 +44,41 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [getWidth, setWidth] = createSignal(1);
   const [getHeight, setHeight] = createSignal(1);
   const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
-  const [getSolution, setSolution] = createSignal([0], {equals: false});
+  const [getSolution, setSolution] = createSignal(getMatrix().solution);
   const [getAnimationStep, setAnimationStep] = createSignal(5); //% increase in link length per animation tick
-
-  //reactively set canvas size based on matrix size
-  const initCanvas = (): void => {
-    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
-    setSolution(getMatrix().solution);
-  };
 
   //solidjs effect - this causes initCanvas to run anytime a solidjs signal used by initCanvas (getMatrix) changes
   createEffect(() => {
     initCanvas();
   });
+  createEffect(() => {
+    updateMatrix();
+  });
 
   //solidjs built-in effect, runs one time after the first render of this component
   onMount(() => {
     ctx = canvas.getContext('2d');
+    updateMatrix();
+    initCanvas();
+    lastUpdate = performance.now();
+    updateCanvas();
+  });
+
+  //reactively set canvas size based on matrix size
+  const initCanvas = (): void => {
+    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
+    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
+    // setSolution(getMatrix().solution);
+  };
+
+  const updateMatrix = () => {
     let matrixData: Array<number> = [];
     for(let i=0; i<props.UIState.length; i++){
       matrixData.push(props.UIState[i].getValue());
     }
     if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
-    initCanvas();
-    lastUpdate = performance.now();
-    updateCanvas();
-  });
+  };
 
   //canvas main loop - draws and animates the matrix on the canvas
   const updateCanvas = (): void => {
@@ -319,12 +326,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
-    let matrixData: Array<number> = [];
-    for(let i=0; i<props.UIState.length; i++){
-      matrixData.push(props.UIState[i].getValue());
-    }
-    if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
-    else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
+    // let matrixData: Array<number> = [];
+    // for(let i=0; i<props.UIState.length; i++){
+    //   matrixData.push(props.UIState[i].getValue());
+    // }
+    // if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
+    // else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
+    // getMatrix().solution = [6,6,6]
     for(const update of getMatrix().animatedAlgXSearch()){
       if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
         await (animationComplete = getExposedPromise());
@@ -334,6 +342,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         await (stepComplete = getExposedPromise());
         stepComplete = null;
       }
+      console.log(getSolution())
     }
   };
   const stepCB = (event: MouseEvent): void => {
@@ -366,7 +375,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <button onClick={enableStepModeCB}> stepMode </button>
       </div>
       <div className='solution'>
-        {getSolution().toString()}
+        {getSolution()}
       </div>
       <canvas ref={canvas} width={getWidth()} height={getHeight()}/>
     </div>
