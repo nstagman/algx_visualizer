@@ -67,7 +67,6 @@ const AlgorithmVisualizer: Component = () => {
     }
   };
 
-  
   initApp();
 
   return (

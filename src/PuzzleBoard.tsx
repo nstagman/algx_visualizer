@@ -7,8 +7,9 @@ type PuzzleSquareState = {
   squareNum: number,
   getValue: () => number,
   setValue: (v: number) => number,
-  getComputed: () => boolean,
-  setComputed: (v: boolean) => boolean
+  isSolution: () => boolean,
+  setSolution: (v: boolean) => boolean,
+  manuallySet: boolean
 };
 
 /**Returns array of PuzzleBoardState with specified size*/
@@ -17,14 +18,14 @@ function _initBoardState(size: number) {
   for(let i=0; i<size; i++){
     const [gv, sv] = createSignal(0);
     const [gc, sc] = createSignal(false);
-    puzzleBoardState.push({squareNum: i, getValue: gv, setValue: sv, getComputed: gc, setComputed: sc});
+    puzzleBoardState.push({squareNum: i, getValue: gv, setValue: sv, isSolution: gc, setSolution: sc, manuallySet: false});
   }
   return puzzleBoardState;
 }
 
 /**Returns getter, setter functions for getting and creating a new PuzzleBoard boardState prop (PuzzleSquareState[])*/
 function createBoardState(size?: number): [() => PuzzleSquareState[], (size: number) => PuzzleSquareState[]] {
-  const [getter, set] = createSignal(_initBoardState(size != null ? size : 0));
+  const [getter, set] = createSignal(_initBoardState(size != null ? size : 0), {equals: false});
   const setter = (s: number) => { return set(_initBoardState(s)) };
   return [getter, setter];
 }
@@ -46,18 +47,23 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
     if(!props.enableInput) { return; }
     if(allowableKeys.includes(Number(event.key), 0)){
       props.setValue(Number(event.key)); //set value to key if in allowableKeys
-      props.setComputed(false);
+      props.setSolution(false);
+      props.manuallySet = true;
     }
     else if(event.key === 'Delete' || event.key === 'Backspace'){
       props.setValue(0); //no number is represented with a value of 0
-      props.setComputed(false);
+      props.setSolution(false);
+      props.manuallySet = false;
     }
   };
 
   return(
     <div
-      id={'sq' + props.squareNum}
-      className={props.sudoku ? 'PuzzleSquare' : 'MatrixIndex'}
+      id={'sq' + props.squareNum }
+      className={
+        (props.sudoku ? 'PuzzleSquare' : 'MatrixIndex') +
+        (props.isSolution() ? ' Solution' : '')
+      }
       tabIndex={0} //makes focusable
       onKeyDown={keyDownCB}
       style={{

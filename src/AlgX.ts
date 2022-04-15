@@ -569,10 +569,10 @@ const buildMatrix = (matrixData: Array<Number>, numRows: number, numCols: number
 };
 
 //returns array representing a sudoku board from a given AlgXMatrix solution
-const decodeSolution = (solution: Array<number>): Array<number> => {
+const decodeSolution = (solution: Array<number>, length:number): Array<number> => {
   let solvedPuzzle: Array<number> = [];
-  const dim = Math.sqrt(solution.length);
-  for(let i=0; i< solution.length; i++){ solvedPuzzle.push(0); }
+  const dim = Math.sqrt(length);
+  for(let i=0; i< length; i++){ solvedPuzzle.push(0); }
   for(const row of solution){
     solvedPuzzle[(row/dim)|0] = (row % dim) + 1
   }
