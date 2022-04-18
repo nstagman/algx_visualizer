@@ -8,30 +8,30 @@ const AlgorithmVisualizer: Component = () => {
   const [isSudoku, setIsSudoku] = createSignal(false);
   const [rows, setRows] = createSignal(6);
   const [cols, setCols] = createSignal(7);
-  const [boardState, initBoardState] = createBoardState(rows() * cols());
+  const [boardState, initBoardState] = createBoardState(rows() * cols(), {equals: false});
 
   const initApp = () => {
     setRows(6);
     setCols(7);
     setIsSudoku(false);
     initBoardState(rows() * cols());
-    boardState()[0].setValue(1);
-    boardState()[3].setValue(1);
-    boardState()[6].setValue(1);
-    boardState()[7].setValue(1);
-    boardState()[10].setValue(1);
-    boardState()[17].setValue(1);
-    boardState()[18].setValue(1);
-    boardState()[20].setValue(1);
-    boardState()[23].setValue(1);
-    boardState()[25].setValue(1);
-    boardState()[26].setValue(1);
-    boardState()[29].setValue(1);
-    boardState()[30].setValue(1);
-    boardState()[33].setValue(1);
-    boardState()[34].setValue(1);
-    boardState()[36].setValue(1);
-    boardState()[41].setValue(1);
+    boardState()[0].setManValue(1);
+    boardState()[3].setManValue(1);
+    boardState()[6].setManValue(1);
+    boardState()[7].setManValue(1);
+    boardState()[10].setManValue(1);
+    boardState()[17].setManValue(1);
+    boardState()[18].setManValue(1);
+    boardState()[20].setManValue(1);
+    boardState()[23].setManValue(1);
+    boardState()[25].setManValue(1);
+    boardState()[26].setManValue(1);
+    boardState()[29].setManValue(1);
+    boardState()[30].setManValue(1);
+    boardState()[33].setManValue(1);
+    boardState()[34].setManValue(1);
+    boardState()[36].setManValue(1);
+    boardState()[41].setManValue(1);
   };
 
   const fxf = () => {

@@ -14,10 +14,10 @@ type LinkDrawInfo = {
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //matrix size
-  const nodeSize = 9;
+  const[nodeSize, setNodeSize] = createSignal(9);
   const lineWidth = 1;
-  const linkLen = nodeSize;
-  const gridSize = nodeSize + linkLen
+  let linkLen = nodeSize();
+  let gridSize = nodeSize() + linkLen
   //colors
   // const canvasColor = 'rgba(255, 255, 255, 1.0)';
   const canvasColor = 'rgba(0, 0, 0, 1.0)';
@@ -37,24 +37,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let lastUpdate: number;
   let elapsedTicks: number = 0;
   let animationComplete: any | null = null;
+  let animationStep = 5;
   let stepComplete: any | null = null;
   let stepMode: boolean = false;
+  let scaleSlider: any;
+  let speedSlider: any;
 
   //solidjs reactive signals for runtime updates
   const [getWidth, setWidth] = createSignal(1);
   const [getHeight, setHeight] = createSignal(1);
   const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
-  let prevSolution: Array<number> = []; //hack to diff solution array - solution is updated by AlgX module causing built-in compare to not work
-  const [getSolution, setSolution] = createSignal(getMatrix().solution, {
-    equals: (newSolution, oldSolution) => {
-      const eq = newSolution.filter(v => !prevSolution.includes(v)).concat(prevSolution.filter(x => !newSolution.includes(x))).length === 0;
-      prevSolution = oldSolution.slice();
-      return eq;
-    }
-  });
-  const [getAnimationStep, setAnimationStep] = createSignal(100); //% increase in link length per animation tick
+  const [getSolution, setSolution] = createSignal(getMatrix().solution.slice());
 
-  //solidjs effects runs everytime a dependant signal within the effect is updated
+  //solidjs effects runs everytime a signal within the effect is updated
   createEffect(() => {
     initCanvas();
   });
@@ -68,6 +63,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //solidjs built-in effect, runs one time after the first render of this component
   onMount(() => {
     ctx = canvas.getContext('2d');
+    scaleSlider.value = 4;
+    speedSlider.value = 3;
     updateMatrix();
     initCanvas();
     lastUpdate = performance.now();
@@ -76,17 +73,18 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //reactively set canvas size based on matrix size
   const initCanvas = (): void => {
+    linkLen = nodeSize();
+    gridSize = nodeSize() + linkLen;
     setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
     setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
-    prevSolution = [];
-    setSolution(getMatrix().solution);
+    setSolution(getMatrix().solution.slice());
   };
 
   //make the constraint matrix react to changes in the UI
   const updateMatrix = (): void => {
     let matrixData: Array<number> = [];
     for(let i=0; i<props.UIState.length; i++){
-      matrixData.push(props.UIState[i].getValue());
+        matrixData.push(props.UIState[i].manValue());
     }
     if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
@@ -97,22 +95,23 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     batch(() => {
       if(!props.sudoku){
         for(const [i, square] of props.UIState.entries()){
-          if(getSolution().includes((i/props.cols)|0) && square.getValue() > 0){
+          if(getSolution().includes((i/props.cols)|0) && untrack(() => square.manValue()) > 0){
             square.setSolution(true);
           }
           else{ square.setSolution(false); }
         }
       }
       else{
-        // const currentSolution = getSolution();
-        // const decodedSolution: Array<number> = decodeSolution(currentSolution, props.UIState.length);
-        // console.log(decodedSolution)
-        // for(const [i, sol] of decodedSolution.entries()){
-        //   if(!props.UIState[i].manuallySet){
-        //     props.UIState[i].setValue(sol);
-        //     props.UIState[i].setSolution(true);
-        //   }
-        // }
+        const decodedSolution: Array<number> = decodeSolution(getSolution(), props.UIState.length);
+        for(const [i, sol] of decodedSolution.entries()){
+          console.log(decodedSolution)
+          const square = props.UIState[i];
+          if(square != null && untrack(() => square.manValue()) === 0){
+            square.setValue(sol);
+            if(sol > 0){ square.setSolution(true); }
+            else{ square.setSolution(false); }
+          }
+        }
       }
     });
   };
@@ -179,9 +178,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(node.solution){ ctx.fillStyle = nodeSolutionColor; }
     let x, y;
     [x,y] = nodeTop(node);
-    x -= nodeSize/2;
+    x -= nodeSize()/2;
     ctx.beginPath();
-    ctx.rect(x, y, nodeSize, nodeSize);
+    ctx.rect(x, y, nodeSize(), nodeSize());
     ctx.fill();
   };
 
@@ -198,7 +197,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     wrapping = n2.row > n1.row;
-    line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize;
+    line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize();
     line2Length = wrapping ? gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize: 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to top of node and draw the current length of link upward
@@ -231,7 +230,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     wrapping = n2.row < n1.row;
-    line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize;
+    line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize();
     line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to bottom of node and draw the current length of link downward
@@ -264,7 +263,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     wrapping = n2.col > n1.col;
-    line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize;
+    line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize();
     line2Length = wrapping ? gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize : 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to left of node and draw the current length of link leftward
@@ -297,7 +296,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     wrapping = n2.col < n1.col;
-    line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize;
+    line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize();
     line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
     currentLength = (line1Length + line2Length) * link.pct/100;
     //move to right of node and draw the current length of link rightward
@@ -320,10 +319,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //modify link.pct based on the animationStep value
   const updateLinkAnimationLength = (link: LinkDrawInfo): void => {
     if(!link.reverse){
-      link.pct = link.pct + elapsedTicks*getAnimationStep() >= 100 ? 100 : link.pct + elapsedTicks*getAnimationStep();
+      link.pct = link.pct + elapsedTicks*animationStep >= 100 ? 100 : link.pct + elapsedTicks*animationStep;
     }
     else{
-      link.pct = link.pct - elapsedTicks*getAnimationStep() <= 0 ? 0 : link.pct - elapsedTicks*getAnimationStep();
+      link.pct = link.pct - elapsedTicks*animationStep <= 0 ? 0 : link.pct - elapsedTicks*animationStep;
     }
   }
 
@@ -346,19 +345,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //translates matrix row, col position to a tuple of canvas coordinates for a given node
   const nodeCenter = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize/2];
+    return [node.col*gridSize + nodeSize()/2, node.row*gridSize + nodeSize()/2];
   };
   const nodeTop = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize/2, node.row*gridSize];
+    return [node.col*gridSize + nodeSize()/2, node.row*gridSize];
   };
   const nodeBottom = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize/2, node.row*gridSize + nodeSize];
+    return [node.col*gridSize + nodeSize()/2, node.row*gridSize + nodeSize()];
   };
   const nodeLeft = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize, node.row*gridSize + nodeSize/2];
+    return [node.col*gridSize, node.row*gridSize + nodeSize()/2];
   };
   const nodeRight = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize, node.row*gridSize + nodeSize/2];
+    return [node.col*gridSize + nodeSize(), node.row*gridSize + nodeSize()/2];
   };
 
   //button callbacks
@@ -372,7 +371,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         await (stepComplete = getExposedPromise());
         stepComplete = null;
       }
-      setSolution(getMatrix().solution);
+      setSolution(getMatrix().solution.slice());
     }
   };
   const stepCB = (event: MouseEvent): void => {
@@ -380,6 +379,48 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
   const enableStepModeCB = (event: MouseEvent): void => {
     stepMode = stepMode ? false : true;
+  };
+  const scaleSliderCB = (event: Event): void => {
+    const val = Number(scaleSlider.value);
+    switch(val){
+      case 1:
+        setNodeSize(3);
+        break;
+      case 2:
+        setNodeSize(5);
+        break;
+      case 3:
+        setNodeSize(7);
+        break;
+      case 4:
+        setNodeSize(9);
+        break;
+      case 5:
+        setNodeSize(11);
+        break;
+      default:
+    }
+  };
+  const speedSliderCB = (event: Event): void => {
+    const val = Number(speedSlider.value);
+    switch(val){
+      case 1:
+        animationStep = 1;
+        break;
+      case 2:
+        animationStep = 2;
+        break;
+      case 3:
+        animationStep = 5;
+        break;
+      case 4:
+        animationStep = 10;
+        break;
+      case 5:
+        animationStep = 100;
+        break;
+      default:
+    }
   };
 
   //returns a promise object with exposed resolve and reject handles
@@ -400,12 +441,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     <div className='Animator'>
       <div>
         <button onClick={solveCB}> solve </button>
-        {/* <button onClick={testCB}> test </button> */}
         <button onClick={stepCB}> step </button>
         <button onClick={enableStepModeCB}> stepMode </button>
+        <input type='range' id='scale' ref={scaleSlider} min='1' max='5' onInput={scaleSliderCB}/>
+        <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
       <div className='solution'>
-        {getSolution().length > 0 ? getSolution() : '\u00A0'}
+        {getSolution().length > 0 ? getSolution().join(' ') : '\u00A0'}
       </div>
       <canvas ref={canvas} width={getWidth()} height={getHeight()}/>
     </div>

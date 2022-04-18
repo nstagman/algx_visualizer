@@ -483,6 +483,7 @@ class AlgXMatrix {
       this.solution.pop();
     }
     this.focusNode(this.root)
+    yield 0;
     return this.solved;
   }
 

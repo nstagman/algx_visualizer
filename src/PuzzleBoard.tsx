@@ -1,15 +1,16 @@
 import './PuzzleBoard.css'
-import { JSXElement, Component, For, createSignal } from 'solid-js';
+import { JSXElement, Component, For, createSignal, Show } from 'solid-js';
 
 
 /**Object representing the state of a square in the puzzle */
 type PuzzleSquareState = {
   squareNum: number,
-  getValue: () => number,
-  setValue: (v: number) => number,
-  isSolution: () => boolean,
-  setSolution: (v: boolean) => boolean,
-  manuallySet: boolean
+  getValue: () => number, //get value set by algx
+  setValue: (v: number) => number, //fn for algx to set value
+  manValue: () => number, //get value set through ui
+  setManValue: (v: number) => number, //fn to set value with ui
+  isSolution: () => boolean, //get solution flag
+  setSolution: (v: boolean) => boolean //set solution flag
 };
 
 /**Returns array of PuzzleBoardState with specified size*/
@@ -17,15 +18,24 @@ function _initBoardState(size: number) {
   const puzzleBoardState: Array<PuzzleSquareState> = [];
   for(let i=0; i<size; i++){
     const [gv, sv] = createSignal(0);
-    const [gc, sc] = createSignal(false);
-    puzzleBoardState.push({squareNum: i, getValue: gv, setValue: sv, isSolution: gc, setSolution: sc, manuallySet: false});
+    const [mv, smv] = createSignal(0);
+    const [gs, ss] = createSignal(false);
+    puzzleBoardState.push({
+      squareNum: i,
+      getValue: gv,
+      setValue: sv,
+      manValue: mv,
+      setManValue: smv,
+      isSolution: gs,
+      setSolution: ss,
+    });
   }
   return puzzleBoardState;
 }
 
 /**Returns getter, setter functions for getting and creating a new PuzzleBoard boardState prop (PuzzleSquareState[])*/
-function createBoardState(size?: number): [() => PuzzleSquareState[], (size: number) => PuzzleSquareState[]] {
-  const [getter, set] = createSignal(_initBoardState(size != null ? size : 0), {equals: false});
+function createBoardState(size?: number, kwargs?: Object): [() => PuzzleSquareState[], (size: number) => PuzzleSquareState[]] {
+  const [getter, set] = createSignal(_initBoardState(size != null ? size : 0), kwargs);
   const setter = (s: number) => { return set(_initBoardState(s)) };
   return [getter, setter];
 }
@@ -46,16 +56,29 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
   const keyDownCB = (event: KeyboardEvent) => {
     if(!props.enableInput) { return; }
     if(allowableKeys.includes(Number(event.key), 0)){
-      props.setValue(Number(event.key)); //set value to key if in allowableKeys
+      props.setManValue(Number(event.key)); //set value to key if in allowableKeys
+      props.setValue(0);
       props.setSolution(false);
-      props.manuallySet = true;
     }
     else if(event.key === 'Delete' || event.key === 'Backspace'){
-      props.setValue(0); //no number is represented with a value of 0
+      props.setManValue(0); //no number is represented with a value of 0
+      props.setValue(0);
       props.setSolution(false);
-      props.manuallySet = false;
     }
   };
+
+  //determine the text to show inside this square
+  let inner;
+  if(props.sudoku){ inner =
+    <Show when={props.manValue() > 0} fallback={props.getValue() > 0 ? props.getValue() : '\u00A0'}>
+      {props.manValue() > 0 ? props.manValue() : '\u00A0'}
+    </Show>
+  }
+  else{ inner =
+    <Show when={props.manValue() > 0} fallback={props.getValue()}>
+      {props.manValue()}
+    </Show>
+  }
 
   return(
     <div
@@ -71,10 +94,7 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
         "margin-bottom": `${bmargin ? "2px" : "0px"}`
       }}
     >
-      {/*write the unicode nbsp character instead of 0 for sudoku puzzles*/}
-      {props.sudoku
-      ? props.getValue() > 0 ? props.getValue() : '\u00A0'
-      : props.getValue()}
+      {inner}
     </div>
   );
 };
@@ -105,7 +125,7 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
   }
 
   return(
-    <div 
+    <div
       className={props.sudoku ? 'PuzzleBoard' : 'CustomMatrix'}
       onKeyDown={keyDownCB}
       style={{
@@ -113,12 +133,13 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
       }}
     >
       <For each={props.boardState}>
-        { (squareState) => <PuzzleSquare 
-                            {...squareState} 
-                            sudoku={props.sudoku} 
-                            maxVal={props.sudoku ? props.rows : 1} 
-                            enableInput={props.enableInput}
-                            />
+        { (squareState) =>
+          <PuzzleSquare
+            {...squareState}
+            sudoku={props.sudoku}
+            maxVal={props.sudoku ? props.rows : 1}
+            enableInput={props.enableInput}
+          />
         }
       </For>
     </div>

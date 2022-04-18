@@ -43,3 +43,7 @@
 .MatrixIndex:focus {
     background-color:goldenrod;
 }
+
+.Solution {
+    background-color:lawngreen;
+}
