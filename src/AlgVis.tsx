@@ -104,7 +104,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       else{
         const decodedSolution: Array<number> = decodeSolution(getSolution(), props.UIState.length);
         for(const [i, sol] of decodedSolution.entries()){
-          console.log(decodedSolution)
           const square = props.UIState[i];
           if(square != null && untrack(() => square.manValue()) === 0){
             square.setValue(sol);

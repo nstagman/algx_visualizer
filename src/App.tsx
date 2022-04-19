@@ -9,7 +9,13 @@ const AlgorithmVisualizer: Component = () => {
   const [rows, setRows] = createSignal(6);
   const [cols, setCols] = createSignal(7);
   const [boardState, initBoardState] = createBoardState(rows() * cols(), {equals: false});
+  let fxfBak: Array<number> = [];
+  let nxnBak: Array<number> = [];
+  let customBak: Array<number> = [];
+  let rowsBak: number;
+  let colsBak: number;
 
+  //create and write values to initial binary matrix
   const initApp = () => {
     setRows(6);
     setCols(7);
@@ -34,7 +40,32 @@ const AlgorithmVisualizer: Component = () => {
     boardState()[41].setManValue(1);
   };
 
+  const storeBoardState = () => {
+    if(isSudoku() && rows() === 4){
+      fxfBak = [];
+      for(const square of boardState()){
+        fxfBak.push(square.manValue())
+      }
+    }
+    else if(isSudoku() && rows() === 9){
+      nxnBak = [];
+      for(const square of boardState()){
+        nxnBak.push(square.manValue())
+      }
+    }
+    else if(!isSudoku()){
+      customBak = [];
+      for(const square of boardState()){
+        customBak.push(square.manValue())
+      }
+      rowsBak = rows();
+      colsBak = cols();
+    }
+  };
+
+  //change ui to 4x4 sudoku
   const fxf = () => {
+    storeBoardState();
     if(!isSudoku() || rows() !== 4) {
       batch(() => {
         setIsSudoku(true);
@@ -42,10 +73,15 @@ const AlgorithmVisualizer: Component = () => {
         setCols(4);
         initBoardState(16);
       });
+      for(const [i, val] of fxfBak.entries()){
+        boardState()[i].setManValue(val);
+      }
     }
   };
 
+  //change ui to 9x9 sudoku
   const nxn = () => {
+    storeBoardState();
     if(!isSudoku() || rows() !== 9){
       batch(() => {
         setIsSudoku(true);
@@ -53,17 +89,25 @@ const AlgorithmVisualizer: Component = () => {
         setCols(9);
         initBoardState(81);
       });
+      for(const [i, val] of nxnBak.entries()){
+        boardState()[i].setManValue(val);
+      }
     }
   };
 
+  //change ui to a binary matrix
   const customMatrix = () => {
+    storeBoardState();
+    setRows(rowsBak);
+    setCols(colsBak);
     if(isSudoku()){
-      setRows(6);
-      setCols(7);
       batch(() => {
         setIsSudoku(false);
-        initBoardState(rows() * cols());
+        initBoardState(rows()* cols());
       });
+      for(const [i, val] of customBak.entries()){
+        boardState()[i].setManValue(val);
+      }
     }
   };
 
