@@ -42,6 +42,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let stepMode: boolean = false;
   let scaleSlider: any;
   let speedSlider: any;
+  let turbo: boolean = false; //skip animation and only update on solution change
 
   //solidjs reactive signals for runtime updates
   const [getWidth, setWidth] = createSignal(1);
@@ -50,21 +51,15 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [getSolution, setSolution] = createSignal(getMatrix().solution.slice());
 
   //solidjs effects runs everytime a signal within the effect is updated
-  createEffect(() => {
-    initCanvas();
-  });
-  createEffect(() => {
-    updateMatrix();
-  });
-  createEffect(() => {
-    updateUISolution();
-  });
+  createEffect(() => { initCanvas(); });
+  createEffect(() => { updateMatrix(); });
+  createEffect(() => { updateUISolution(); });
 
   //solidjs built-in effect, runs one time after the first render of this component
   onMount(() => {
     ctx = canvas.getContext('2d');
     scaleSlider.value = 4;
-    speedSlider.value = 3;
+    speedSlider.value = 2;
     updateMatrix();
     initCanvas();
     lastUpdate = performance.now();
@@ -362,12 +357,22 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
     for(const update of getMatrix().animatedAlgXSearch()){
-      if(update === 0 || stepMode){ //no timeout specified - wait for animator to finish this step
-        await (animationComplete = getExposedPromise());
+      if((update === 0 || stepMode) && !turbo){ //no timeout specified - wait for animator to finish this step
+        animationComplete = getExposedPromise();
+        await animationComplete;
         animationComplete = null;
       }
+      if(turbo && !stepMode){
+        //check if solution has been updated
+        const eq = getSolution().length === getMatrix().solution.length && 
+          getSolution().every((v, i) => v === getMatrix().solution[i])
+        if(!eq){ //if solution has changed then wait a short amount of time
+          await new Promise(res => setTimeout(res, 50))
+        }
+      }
       if(stepMode){
-        await (stepComplete = getExposedPromise());
+        stepComplete = getExposedPromise();
+        await stepComplete;
         stepComplete = null;
       }
       setSolution(getMatrix().solution.slice());
@@ -380,8 +385,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     stepMode = stepMode ? false : true;
   };
   const scaleSliderCB = (event: Event): void => {
-    const val = Number(scaleSlider.value);
-    switch(val){
+    switch(Number(scaleSlider.value)){
       case 1:
         setNodeSize(3);
         break;
@@ -401,22 +405,23 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
   const speedSliderCB = (event: Event): void => {
-    const val = Number(speedSlider.value);
-    switch(val){
+    turbo = false;
+    switch(Number(speedSlider.value)){
       case 1:
-        animationStep = 1;
+        animationStep = 2.5;
         break;
       case 2:
-        animationStep = 2;
-        break;
-      case 3:
         animationStep = 5;
         break;
-      case 4:
+      case 3:
         animationStep = 10;
+        break;
+      case 4:
+        animationStep = 100;
         break;
       case 5:
         animationStep = 100;
+        turbo = true;
         break;
       default:
     }

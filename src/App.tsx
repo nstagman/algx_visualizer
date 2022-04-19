@@ -40,6 +40,7 @@ const AlgorithmVisualizer: Component = () => {
     boardState()[41].setManValue(1);
   };
 
+  //store the manually entered values of the current boardstate into respective array
   const storeBoardState = () => {
     if(isSudoku() && rows() === 4){
       fxfBak = [];
@@ -63,51 +64,64 @@ const AlgorithmVisualizer: Component = () => {
     }
   };
 
+  //restore the manually entered values of current boardstate from respective array
+  const restoreBoardState = () => {
+    if(isSudoku() && rows() === 4){
+      for(const [i, val] of fxfBak.entries()){
+        boardState()[i].setManValue(val);
+      }
+    }
+    else if(isSudoku() && rows() === 9){
+      for(const [i, val] of nxnBak.entries()){
+        boardState()[i].setManValue(val);
+      }
+    }
+    else if(!isSudoku()){
+      for(const [i, val] of customBak.entries()){
+        boardState()[i].setManValue(val);
+      }
+    }
+  };
+
   //change ui to 4x4 sudoku
   const fxf = () => {
-    storeBoardState();
     if(!isSudoku() || rows() !== 4) {
+      storeBoardState();
       batch(() => {
         setIsSudoku(true);
         setRows(4);
         setCols(4);
         initBoardState(16);
       });
-      for(const [i, val] of fxfBak.entries()){
-        boardState()[i].setManValue(val);
-      }
+      restoreBoardState();
     }
   };
 
   //change ui to 9x9 sudoku
   const nxn = () => {
-    storeBoardState();
     if(!isSudoku() || rows() !== 9){
+      storeBoardState();
       batch(() => {
         setIsSudoku(true);
         setRows(9);
         setCols(9);
         initBoardState(81);
       });
-      for(const [i, val] of nxnBak.entries()){
-        boardState()[i].setManValue(val);
-      }
+      restoreBoardState();
     }
   };
 
   //change ui to a binary matrix
   const customMatrix = () => {
-    storeBoardState();
-    setRows(rowsBak);
-    setCols(colsBak);
     if(isSudoku()){
+      storeBoardState();
+      setRows(rowsBak);
+      setCols(colsBak);
       batch(() => {
         setIsSudoku(false);
         initBoardState(rows()* cols());
       });
-      for(const [i, val] of customBak.entries()){
-        boardState()[i].setManValue(val);
-      }
+      restoreBoardState();
     }
   };
 

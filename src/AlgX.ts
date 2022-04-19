@@ -135,7 +135,6 @@ class AlgXMatrix {
     return this.root.right === this.root;
   }
 
-  //#region Matrix Manipulation
   //inserts a row of nodes into the matrix
   //row must be empty and nodes must be in increasing columnal order
   insertRow(row: number, cols: Array<number>): void {
@@ -172,65 +171,6 @@ class AlgXMatrix {
     this.rows[newRow[0].row].left = newRow[newRow.length-1];
   }
 
-  //remove a row of nodes from the matrix
-  //adjust all up and down linked nodes of nodes in a row. set row header left and right nodes to itself
-  removeRow(row: number): void {
-    for(const n of this.rows[row].iterateRight()){
-      n.up.down = n.down;
-      n.down.up = n.up;
-      this.cols[n.col].count -= 1;
-      n.left.right = this.rows[row];
-      n.left = this.rows[row];
-    }
-    this.rows[row].right = this.rows[row];
-    this.rows[row].left = this.rows[row];
-  }
-
-  //add a single node into the matrix
-  addNode(row: number, col: number): void {
-    const newNode = new AlgXNode(row, col);
-    //add node into the row at correct column
-    let n: AlgXNode = this.rows[row];
-    for(const itr of this.rows[row].iterateRight()){
-      if(itr.right.col == -1 || itr.right.col > col){
-        n = itr;
-        break;
-      }
-    }
-    newNode.right = n.right;
-    newNode.left = n;
-    newNode.right.left = newNode;
-    n.right = newNode;
-
-    //add node to column at correct row
-    n = this.cols[col];
-    for(const itr of this.cols[col].iterateDown()){
-      if(itr.down.row == -1 || itr.down.row > row){
-        n = itr;
-        break;
-      }
-    }
-    newNode.down = n.down;
-    newNode.up = n;
-    newNode.down.up = newNode;
-    newNode.down = newNode;
-    this.cols[col].count += 1;
-  }
-
-  //removes a single node from the matrix
-  removeNode(row: number, col: number): void {
-    for(const node of this.rows[row].iterateRight()){
-      if(node.col == col){
-        node.up.down = node.down;
-        node.down.up = node.up;
-        node.left.right = node.right;
-        node.right.left = node.left;
-        break;
-      }
-    }
-  }
-//#endregion
-
   //returns column containing the minimum number of nodes
   selectMinCol(): AlgXNode {
     if(this.isEmpty()){ return this.root; }
@@ -245,7 +185,6 @@ class AlgXMatrix {
     return minNode;
   }
 
-  //#region Standard AlgX functions
   //cover a row (partial solution) of the matrix
   //'removes' the column of each node in rowHead from the matrix
   //iterate down each 'removed' column and cover each row
@@ -333,7 +272,6 @@ class AlgXMatrix {
     search();
     return solutions;
   }
-  //#endregion
 
   //algorithm X search as a generator to hook into the animator
   //all cover/uncover functions are inlined in this generator to give granular control of the animation

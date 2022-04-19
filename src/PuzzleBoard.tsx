@@ -18,7 +18,7 @@ function _initBoardState(size: number) {
   const puzzleBoardState: Array<PuzzleSquareState> = [];
   for(let i=0; i<size; i++){
     const [gv, sv] = createSignal(0);
-    const [mv, smv] = createSignal(0);
+    const [mv, smv] = createSignal(0, {equals: false});
     const [gs, ss] = createSignal(false);
     puzzleBoardState.push({
       squareNum: i,
