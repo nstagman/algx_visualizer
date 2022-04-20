@@ -332,7 +332,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       link.pct = 0;
       link.reverse = false;
     }
-    if(link.pct === 0){
+    if(link.pct === 0 && !link.animating){
       link.draw = false; //don't draw links that have been retracted
     }
   }
@@ -357,11 +357,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
     for(const update of getMatrix().animatedAlgXSearch()){
-      if((update === 0 || stepMode) && !turbo){ //no timeout specified - wait for animator to finish this step
-        animationComplete = getExposedPromise();
-        await animationComplete;
-        animationComplete = null;
-      }
       if(turbo && !stepMode){
         //check if solution has been updated
         const eq = getSolution().length === getMatrix().solution.length && 
@@ -369,6 +364,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         if(!eq){ //if solution has changed then wait a short amount of time
           await new Promise(res => setTimeout(res, 50))
         }
+      }
+      else if((update === 0 || stepMode) && !turbo){ //no timeout specified - wait for animator to finish this step
+        animationComplete = getExposedPromise();
+        await animationComplete;
+        animationComplete = null;
       }
       if(stepMode){
         stepComplete = getExposedPromise();

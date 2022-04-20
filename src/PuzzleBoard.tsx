@@ -54,7 +54,6 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
 
   //filter input for allowable numbers
   const keyDownCB = (event: KeyboardEvent) => {
-    if(!props.enableInput) { return; }
     if(allowableKeys.includes(Number(event.key), 0)){
       props.setManValue(Number(event.key)); //set value to key if in allowableKeys
       props.setValue(0);
@@ -138,7 +137,6 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
             {...squareState}
             sudoku={props.sudoku}
             maxVal={props.sudoku ? props.rows : 1}
-            enableInput={props.enableInput}
           />
         }
       </For>

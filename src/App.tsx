@@ -138,7 +138,6 @@ const AlgorithmVisualizer: Component = () => {
             sudoku={isSudoku()}
             rows={rows()}
             cols={cols()}
-            enableInput={true}
           />
       </div>
       <AlgXAnimator 
