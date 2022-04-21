@@ -67,6 +67,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   });
 
   //reactively set canvas size based on matrix size
+  //tracks getMatrix() which updates when a new AlgXMatrix is created
   const initCanvas = (): void => {
     linkLen = nodeSize();
     gridSize = nodeSize() + linkLen;
@@ -76,6 +77,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   //make the constraint matrix react to changes in the UI
+  //tracks manual value changes to the UI - will update whenever user changes a value
   const updateMatrix = (): void => {
     let matrixData: Array<number> = [];
     for(let i=0; i<props.UIState.length; i++){
@@ -86,6 +88,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   //reflect the current partial solution back to the UI
+  //tracks current AlgXMatrix solution array - will update when the solution is modified
   const updateUISolution = (): void => {
     batch(() => {
       if(!props.sudoku){

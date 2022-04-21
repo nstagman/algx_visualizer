@@ -4,22 +4,23 @@ import { PuzzleBoard, createBoardState} from './PuzzleBoard';
 import { AlgXAnimator } from './AlgVis';
 
 
-const AlgorithmVisualizer: Component = () => {
-  const [isSudoku, setIsSudoku] = createSignal(false);
-  const [rows, setRows] = createSignal(6);
-  const [cols, setCols] = createSignal(7);
-  const [boardState, initBoardState] = createBoardState(rows() * cols(), {equals: false});
-  let fxfBak: Array<number> = [];
+const AlgorithmVisualizer: Component = () => {  let fxfBak: Array<number> = [];
   let nxnBak: Array<number> = [];
   let customBak: Array<number> = [];
   let rowsBak: number;
   let colsBak: number;
+  const [rows, setRows] = createSignal(6);
+  const [cols, setCols] = createSignal(7);
+  const [boardState, initBoardState] = createBoardState(rows() * cols(), {equals: false});
+  enum UIType { matrix, fxf, nxn };
+  const [UI, setUI] = createSignal(UIType.matrix);
+
 
   //create and write values to initial binary matrix
   const initApp = () => {
     setRows(6);
     setCols(7);
-    setIsSudoku(false);
+    setUI(UIType.matrix);
     initBoardState(rows() * cols());
     boardState()[0].setManValue(1);
     boardState()[3].setManValue(1);
@@ -42,19 +43,19 @@ const AlgorithmVisualizer: Component = () => {
 
   //store the manually entered values of the current boardstate into respective array
   const storeBoardState = () => {
-    if(isSudoku() && rows() === 4){
+    if(UI() === UIType.fxf){
       fxfBak = [];
       for(const square of boardState()){
         fxfBak.push(square.manValue())
       }
     }
-    else if(isSudoku() && rows() === 9){
+    else if(UI() === UIType.nxn){
       nxnBak = [];
       for(const square of boardState()){
         nxnBak.push(square.manValue())
       }
     }
-    else if(!isSudoku()){
+    else if(UI() === UIType.matrix){
       customBak = [];
       for(const square of boardState()){
         customBak.push(square.manValue())
@@ -66,17 +67,17 @@ const AlgorithmVisualizer: Component = () => {
 
   //restore the manually entered values of current boardstate from respective array
   const restoreBoardState = () => {
-    if(isSudoku() && rows() === 4){
+    if(UI() === UIType.fxf){
       for(const [i, val] of fxfBak.entries()){
         boardState()[i].setManValue(val);
       }
     }
-    else if(isSudoku() && rows() === 9){
+    else if(UI() === UIType.nxn){
       for(const [i, val] of nxnBak.entries()){
         boardState()[i].setManValue(val);
       }
     }
-    else if(!isSudoku()){
+    else if(UI() === UIType.matrix){
       for(const [i, val] of customBak.entries()){
         boardState()[i].setManValue(val);
       }
@@ -85,10 +86,10 @@ const AlgorithmVisualizer: Component = () => {
 
   //change ui to 4x4 sudoku
   const fxf = () => {
-    if(!isSudoku() || rows() !== 4) {
+    if(UI() !== UIType.fxf) {
       storeBoardState();
       batch(() => {
-        setIsSudoku(true);
+        setUI(UIType.fxf);
         setRows(4);
         setCols(4);
         initBoardState(16);
@@ -99,10 +100,10 @@ const AlgorithmVisualizer: Component = () => {
 
   //change ui to 9x9 sudoku
   const nxn = () => {
-    if(!isSudoku() || rows() !== 9){
+    if(UI() !== UIType.nxn){
       storeBoardState();
       batch(() => {
-        setIsSudoku(true);
+        setUI(UIType.nxn);
         setRows(9);
         setCols(9);
         initBoardState(81);
@@ -113,12 +114,12 @@ const AlgorithmVisualizer: Component = () => {
 
   //change ui to a binary matrix
   const customMatrix = () => {
-    if(isSudoku()){
+    if(UI() !== UIType.matrix){
       storeBoardState();
       setRows(rowsBak);
       setCols(colsBak);
       batch(() => {
-        setIsSudoku(false);
+        setUI(UIType.matrix);
         initBoardState(rows()* cols());
       });
       restoreBoardState();
@@ -130,19 +131,19 @@ const AlgorithmVisualizer: Component = () => {
   return (
     <div className='VisualizerApp'>
       <div className='UXBlock'>
-          <button onClick={customMatrix}> custom </button>
-          <button onClick={fxf}> 4x4 </button>
-          <button onClick={nxn}> 9x9 </button>
+          <button classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> custom </button>
+          <button classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4x4 </button>
+          <button classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9x9 </button>
           <PuzzleBoard
             boardState={boardState()}
-            sudoku={isSudoku()}
+            sudoku={UI() === UIType.fxf || UI() === UIType.nxn}
             rows={rows()}
             cols={cols()}
           />
       </div>
       <AlgXAnimator 
         UIState={boardState()}
-        sudoku={isSudoku()}
+        sudoku={UI() === UIType.fxf || UI() === UIType.nxn}
         rows={rows()}
         cols={cols()}
       />
