@@ -1,3 +1,23 @@
 .VisualizerApp{
     display: flex;
 }
+.UXBlock{
+    margin: 1em;
+}
+.UXBlock button{
+    background-color: #4CAF50;
+    border: 1.5px solid rgb(0, 104, 0);
+    padding: 7px 15px;
+    font-size: 16px;
+    color: white;
+    text-align: center;
+    /* cursor: pointer;
+    display: inline-block;
+    float: left; */
+}
+.UXBlock button:not(:last-child) {
+    border-right: none;
+}
+.UXBlock button:hover {
+    background-color: #3e8e41;
+  }

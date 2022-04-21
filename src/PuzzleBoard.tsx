@@ -82,10 +82,6 @@ const PuzzleSquare: Component<any> = (props: any): JSXElement => {
   return(
     <div
       id={'sq' + props.squareNum }
-      // className={
-      //   (props.sudoku ? 'PuzzleSquare' : 'MatrixIndex') +
-      //   (props.isSolution() ? ' Solution' : '')
-      // }
       classList={{
         PuzzleSquare: props.sudoku,
         MatrixIndex: !props.sudoku,

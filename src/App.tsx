@@ -4,7 +4,8 @@ import { PuzzleBoard, createBoardState} from './PuzzleBoard';
 import { AlgXAnimator } from './AlgVis';
 
 
-const AlgorithmVisualizer: Component = () => {  let fxfBak: Array<number> = [];
+const AlgorithmVisualizer: Component = () => {
+  let fxfBak: Array<number> = [];
   let nxnBak: Array<number> = [];
   let customBak: Array<number> = [];
   let rowsBak: number;
@@ -131,15 +132,17 @@ const AlgorithmVisualizer: Component = () => {  let fxfBak: Array<number> = [];
   return (
     <div className='VisualizerApp'>
       <div className='UXBlock'>
-          <button classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> custom </button>
-          <button classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4x4 </button>
-          <button classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9x9 </button>
-          <PuzzleBoard
-            boardState={boardState()}
-            sudoku={UI() === UIType.fxf || UI() === UIType.nxn}
-            rows={rows()}
-            cols={cols()}
-          />
+        <div className='btns'>
+          <button classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> matrix </button>
+          <button classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4 x 4 </button>
+          <button classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9 x 9 </button>
+        </div>
+        <PuzzleBoard
+          boardState={boardState()}
+          sudoku={UI() === UIType.fxf || UI() === UIType.nxn}
+          rows={rows()}
+          cols={cols()}
+        />
       </div>
       <AlgXAnimator 
         UIState={boardState()}
