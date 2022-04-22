@@ -12,13 +12,14 @@
     margin: 1px;
     width: 1.5rem;
     height: 1.5rem;
-    line-height: 1.5rem;
+    line-height: 1.6rem;
     text-align: center;
     background-color: whitesmoke;
+    font-family: 'Ubuntu',sans-serif;
 }
 
 .PuzzleSquare:focus {
-    background-color:goldenrod;
+    background-color:rgb(137, 174, 235);
 }
 
 .CustomMatrix {
@@ -35,13 +36,14 @@
     margin: 1px;
     width: 1.5rem;
     height: 1.5rem;
-    line-height: 1.5rem;
+    line-height: 1.6rem;
     text-align: center;
-    background-color: whitesmoke;
+    background-color: rgb(245, 245, 245);
+    font-family: 'Ubuntu',sans-serif;
 }
 
 .MatrixIndex:focus {
-    background-color:goldenrod;
+    background-color:rgb(137, 174, 235)
 }
 
 .Solution {

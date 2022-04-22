@@ -120,8 +120,10 @@ const PuzzleBoard: Component<any> = (props: any): JSXElement => {
         break;
       default:
     }
-    event.preventDefault();
-    event.stopPropagation();
+    if(arrowKeys.includes(event.key)){
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 
   return(
