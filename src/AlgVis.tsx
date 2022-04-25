@@ -13,13 +13,6 @@ type LinkDrawInfo = {
 };
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
-  //matrix size
-  const[nodeSize, setNodeSize] = createSignal(9);
-  const lineWidth = 1;
-  let linkLen = nodeSize();
-  let gridSize = nodeSize() + linkLen
-  //colors
-  // const canvasColor = 'rgba(255, 255, 255, 1.0)';
   const canvasColor = 'rgba(0, 0, 0, 1.0)';
   const nodeColor = 'rgba(11, 127, 171, 1.0)';
   const nodeCoveredColor = 'rgba(193, 208, 240, 1.0)';
@@ -27,11 +20,20 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const nodeSolutionColor = 'rgba(10, 240, 140, 1.0)';
   const linkColor = 'rgba(153, 51, 51, 1.0)';
   const linkCoveredColor = '#CCCCCC';
-  //animation
+  const lineWidth = 1;
   const hz = 60; //target fps
   const tickRate = 1000/hz; //normalized animation update time
 
-  //component state and reference variables
+  //solidjs reactive signals for runtime updates
+  const [nodeSize, setNodeSize] = createSignal(9);
+  const [getWidth, setWidth] = createSignal(1);
+  const [getHeight, setHeight] = createSignal(1);
+  const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
+  const [getSolution, setSolution] = createSignal(getMatrix().solution.slice());
+
+  //component state variables
+  let linkLen = nodeSize();
+  let gridSize = nodeSize() + linkLen
   let canvas: any;
   let ctx: CanvasRenderingContext2D;
   let lastUpdate: number;
@@ -44,40 +46,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let speedSlider: any;
   let turbo: boolean = false; //skip animation and only update on solution change
 
-  //solidjs reactive signals for runtime updates
-  const [getWidth, setWidth] = createSignal(1);
-  const [getHeight, setHeight] = createSignal(1);
-  const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
-  const [getSolution, setSolution] = createSignal(getMatrix().solution.slice());
 
-  //solidjs effects runs everytime a signal within the effect is updated
-  createEffect(() => { initCanvas(); });
-  createEffect(() => { updateMatrix(); });
-  createEffect(() => { updateUISolution(); });
+  //solidjs effects - tracks signals used and runs each time a signal within the effect is updated
+  createEffect(() => { updateMatrix(); }); //create new constarint matrix when UI is modified by user
+  createEffect(() => { updateCanvasSize(); }); //set canvas size based on matrix size and user-set scale value
+  createEffect(() => { updateUISolution(); }); //reflect the current partial solution back to the UI
 
-  //solidjs built-in effect, runs one time after the first render of this component
-  onMount(() => {
-    ctx = canvas.getContext('2d');
-    scaleSlider.value = 4;
-    speedSlider.value = 2;
-    updateMatrix();
-    initCanvas();
-    lastUpdate = performance.now();
-    updateCanvas();
-  });
-
-  //reactively set canvas size based on matrix size
-  //tracks getMatrix() which updates when a new AlgXMatrix is created
-  const initCanvas = (): void => {
-    linkLen = nodeSize();
-    gridSize = nodeSize() + linkLen;
-    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
-    setSolution(getMatrix().solution.slice());
-  };
-
-  //make the constraint matrix react to changes in the UI
-  //tracks manual value changes to the UI - will update whenever user changes a value
+  //creates new constraint matrix
   const updateMatrix = (): void => {
     let matrixData: Array<number> = [];
     for(let i=0; i<props.UIState.length; i++){
@@ -87,8 +62,16 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
   };
 
-  //reflect the current partial solution back to the UI
-  //tracks current AlgXMatrix solution array - will update when the solution is modified
+  //updates the canvas size to draw full matrix
+  const updateCanvasSize = (): void => {
+    linkLen = nodeSize();
+    gridSize = nodeSize() + linkLen;
+    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
+    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
+    setSolution(getMatrix().solution.slice());
+  };
+
+  //updates the solution flag for each square in the UI board
   const updateUISolution = (): void => {
     batch(() => {
       if(!props.sudoku){
@@ -113,7 +96,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     });
   };
 
-  //canvas main loop - draws and animates the matrix on the canvas
+  //solidjs built-in effect, runs one time after the first render of this component
+  //this is the entry point for the animator
+  onMount(() => {
+    ctx = canvas.getContext('2d');
+    scaleSlider.value = 4;
+    speedSlider.value = 2;
+    updateMatrix();
+    updateCanvasSize();
+    lastUpdate = performance.now();
+    updateCanvas();
+  });
+
+  //canvas main loop - draws the matrix on the canvas
   const updateCanvas = (): void => {
     requestAnimationFrame(updateCanvas);
     const now = performance.now()
@@ -185,20 +180,15 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(!link.draw){ return; }
 
     if(link.animating){ updateLinkAnimationLength(link); }
-    let wrapping: boolean; //determine if link wraps around matrix
-    let x: number;
-    let y: number;
-    let currentLength: number; //amount of link to draw this update
-    let line1Length: number; //distance between 2 nodes - or distance from node to edge of matrix if wrapping
-    let line2Length: number; //used for drawing the second line if the link wraps
 
     //determine line lengths
-    wrapping = n2.row > n1.row;
-    line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize();
-    line2Length = wrapping ? gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize: 0;
-    currentLength = (line1Length + line2Length) * link.pct/100;
+    let wrapping = n2.row > n1.row;
+    let line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize();
+    let line2Length = wrapping ? gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize: 0;
+    let currentLength = (line1Length + line2Length) * link.pct/100;
+
     //move to top of node and draw the current length of link upward
-    [x,y] = nodeTop(n1);
+    let [x,y] = nodeTop(n1);
     ctx.moveTo(x, y);
     ctx.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
 
@@ -218,20 +208,15 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(!link.draw){ return; }
 
     if(link.animating){ updateLinkAnimationLength(link); }
-    let wrapping: boolean; //determine if link wraps around matrix
-    let x: number;
-    let y: number;
-    let currentLength: number; //amount of link to draw this update
-    let line1Length: number; //distance between 2 nodes - or distance from node to edge of matrix if wrapping
-    let line2Length: number; //used for drawing the second line if the link wraps
 
     //determine line lengths
-    wrapping = n2.row < n1.row;
-    line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize();
-    line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
-    currentLength = (line1Length + line2Length) * link.pct/100;
+    let wrapping = n2.row < n1.row;
+    let line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize();
+    let line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
+    let currentLength = (line1Length + line2Length) * link.pct/100;
+
     //move to bottom of node and draw the current length of link downward
-    [x,y] = nodeBottom(n1);
+    let [x,y] = nodeBottom(n1);
     ctx.moveTo(x, y);
     ctx.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
 
@@ -251,20 +236,15 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(!link.draw){ return; }
 
     if(link.animating){ updateLinkAnimationLength(link); }
-    let wrapping: boolean; //determine if link wraps around matrix
-    let x: number;
-    let y: number;
-    let currentLength: number; //amount of link to draw this update
-    let line1Length: number; //distance between 2 nodes - or distance from node to edge of matrix if wrapping
-    let line2Length: number; //used for drawing the second line if the link wraps
 
     //determine line lengths
-    wrapping = n2.col > n1.col;
-    line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize();
-    line2Length = wrapping ? gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize : 0;
-    currentLength = (line1Length + line2Length) * link.pct/100;
+    let wrapping = n2.col > n1.col;
+    let line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize();
+    let line2Length = wrapping ? gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize : 0;
+    let currentLength = (line1Length + line2Length) * link.pct/100;
+
     //move to left of node and draw the current length of link leftward
-    [x,y] = nodeLeft(n1);
+    let [x,y] = nodeLeft(n1);
     ctx.moveTo(x, y);
     ctx.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
 
@@ -284,20 +264,15 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(!link.draw){ return; }
 
     if(link.animating){ updateLinkAnimationLength(link); }
-    let wrapping: boolean; //determine if link wraps around matrix
-    let x: number;
-    let y: number;
-    let currentLength: number; //amount of link to draw this update
-    let line1Length: number; //distance between 2 nodes - or distance from node to edge of matrix if wrapping
-    let line2Length: number; //used for drawing the second line if the link wraps
 
     //determine line lengths
-    wrapping = n2.col < n1.col;
-    line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize();
-    line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
-    currentLength = (line1Length + line2Length) * link.pct/100;
+    let wrapping = n2.col < n1.col;
+    let line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize();
+    let line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
+    let currentLength = (line1Length + line2Length) * link.pct/100;
+
     //move to right of node and draw the current length of link rightward
-    [x,y] = nodeRight(n1);
+    let [x,y] = nodeRight(n1);
     ctx.moveTo(x, y);
     ctx.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
 
@@ -431,7 +406,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   //returns a promise object with exposed resolve and reject handles
-  //this is used to let the canvas update loop resolve a promise created by the AlgXSearch executor
+  //this is used to let the canvas update loop tell the AlgXSearch that animation has finished
   const getExposedPromise = (): any => {
     let res, rej, promise: any;
     promise = new Promise((_res, _rej) => {
