@@ -4,14 +4,18 @@
   --btn-color: white;
   --btn-text-color: #2f78ec;
   --btn-border-color: #2f78ec;
+  --btn-hover-color: rgba(34, 100, 206, 0.75);
+  --btn-hover-text-color: white;
+  --btn-hover-border-color: #275fb9;
+  --btn-sel-color: #175cca;
+  --btn-sel-text-color: white;
+  --btn-sel-border-color: #2264ce;
+  --btn-focus-border-color: #234b8d;
 
-  --hover-color: rgba(34, 100, 206, 0.75);
-  --hover-text-color: white;
-  --hover-border-color: #275fb9;
-  
-  --sel-color: #175cca;
-  --sel-text-color: white;
-  --sel-border-color: #2264ce;
+  --board-background-color: black;
+  --square-background-color: whitesmoke;
+  --square-focus-color: goldenrod;
+  --square-solution-color: lawngreen;
 }
 .UXBlock{
   display: flex;
@@ -37,18 +41,18 @@
   float: left; */
 }
 .UXBlock .selected{
-  background-color: var(--sel-color);
-  color: var(--sel-text-color);
-  border: 1px solid var(--sel-border-color);
+  background-color: var(--btn-sel-color);
+  color: var(--btn-sel-text-color);
+  border: 1px solid var(--btn-sel-border-color);
 }
 .UXBlock button:hover {
-  background-color: var(--hover-color);
-  color: var(--hover-text-color);
-  border: 1px solid var(--hover-border-color);
+  background-color: var(--btn-hover-color);
+  color: var(--btn-hover-text-color);
+  border: 1px solid var(--btn-hover-border-color);
 }
 .UXBlock button:focus {
   outline-offset: 0.1em;
-  outline-color: var(--hover-border-color);
+  outline-color: var(--btn-focus-border-color);
 }
 
 

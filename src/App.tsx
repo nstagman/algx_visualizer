@@ -5,24 +5,25 @@ import { AlgXAnimator } from './AlgVis';
 
 
 const AlgorithmVisualizer: Component = () => {
+  const [rows, setRows] = createSignal(6);
+  const [cols, setCols] = createSignal(7);
+  const [boardState, setBoardState] = createBoardState(rows() * cols(), {equals: false});
+  enum UIType { matrix, fxf, nxn };
+  const [UI, setUI] = createSignal(UIType.matrix);
+
   let fxfBak: Array<number> = [];
   let nxnBak: Array<number> = [];
   let customBak: Array<number> = [];
   let rowsBak: number;
   let colsBak: number;
-  const [rows, setRows] = createSignal(6);
-  const [cols, setCols] = createSignal(7);
-  const [boardState, initBoardState] = createBoardState(rows() * cols(), {equals: false});
-  enum UIType { matrix, fxf, nxn };
-  const [UI, setUI] = createSignal(UIType.matrix);
 
 
-  //create and write values to initial binary matrix
+  //create and write values for the initial binary matrix
   const initApp = () => {
     setRows(6);
     setCols(7);
     setUI(UIType.matrix);
-    initBoardState(rows() * cols());
+    setBoardState(rows() * cols());
     boardState()[0].setManValue(1);
     boardState()[3].setManValue(1);
     boardState()[6].setManValue(1);
@@ -93,7 +94,7 @@ const AlgorithmVisualizer: Component = () => {
         setUI(UIType.fxf);
         setRows(4);
         setCols(4);
-        initBoardState(16);
+        setBoardState(16);
       });
       restoreBoardState();
     }
@@ -107,7 +108,7 @@ const AlgorithmVisualizer: Component = () => {
         setUI(UIType.nxn);
         setRows(9);
         setCols(9);
-        initBoardState(81);
+        setBoardState(81);
       });
       restoreBoardState();
     }
@@ -121,7 +122,7 @@ const AlgorithmVisualizer: Component = () => {
       setCols(colsBak);
       batch(() => {
         setUI(UIType.matrix);
-        initBoardState(rows()* cols());
+        setBoardState(rows()* cols());
       });
       restoreBoardState();
     }

@@ -3,7 +3,7 @@
   margin: 1rem;
   padding: 2px 1px 1px 2px;
   width: fit-content;
-  background-color: black;
+  background-color: var(--board-background-color);
 }
 
 .PuzzleSquare {
@@ -14,12 +14,12 @@
   height: 1.5rem;
   line-height: 1.6rem;
   text-align: center;
-  background-color: whitesmoke;
+  background-color: var(--square-background-color);
   font-family: 'Ubuntu',sans-serif;
 }
 
 .PuzzleSquare:focus {
-  background-color:rgb(137, 174, 235);
+  background-color: var(--square-focus-color);
 }
 
 .CustomMatrix {
@@ -27,7 +27,7 @@
   margin: 1rem;
   padding: 0px 1px 1px 0px;
   width: fit-content;
-  background-color: black;
+  background-color: var(--board-background-color);
 }
 
 .MatrixIndex {
@@ -38,14 +38,14 @@
   height: 1.5rem;
   line-height: 1.6rem;
   text-align: center;
-  background-color: rgb(245, 245, 245);
+  background-color: var(--square-background-color);
   font-family: 'Ubuntu',sans-serif;
 }
 
 .MatrixIndex:focus {
-  background-color:rgb(137, 174, 235)
+  background-color:var(--square-focus-color);
 }
 
 .Solution {
-  background-color:lawngreen;
+  background-color: var(--square-solution-color);
 }

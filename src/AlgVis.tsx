@@ -26,10 +26,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //solidjs reactive signals for runtime updates
   const [nodeSize, setNodeSize] = createSignal(9);
-  const [getWidth, setWidth] = createSignal(1);
-  const [getHeight, setHeight] = createSignal(1);
-  const [getMatrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
-  const [getSolution, setSolution] = createSignal(getMatrix().solution.slice());
+  const [width, setWidth] = createSignal(1);
+  const [height, setHeight] = createSignal(1);
+  const [matrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
+  const [solution, setSolution] = createSignal(matrix().solution.slice());
 
   //component state variables
   let linkLen = nodeSize();
@@ -66,9 +66,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const updateCanvasSize = (): void => {
     linkLen = nodeSize();
     gridSize = nodeSize() + linkLen;
-    setWidth(gridSize * getMatrix().cols.length + gridSize*2.5);
-    setHeight(gridSize * getMatrix().rows.length + gridSize*2.5);
-    setSolution(getMatrix().solution.slice());
+    setWidth(gridSize * matrix().cols.length + gridSize*2.5);
+    setHeight(gridSize * matrix().rows.length + gridSize*2.5);
+    setSolution(matrix().solution.slice());
   };
 
   //updates the solution flag for each square in the UI board
@@ -76,14 +76,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     batch(() => {
       if(!props.sudoku){
         for(const [i, square] of props.UIState.entries()){
-          if(getSolution().includes((i/props.cols)|0) && untrack(() => square.manValue()) > 0){
+          if(solution().includes((i/props.cols)|0) && untrack(() => square.manValue()) > 0){
             square.setSolution(true);
           }
           else{ square.setSolution(false); }
         }
       }
       else{
-        const decodedSolution: Array<number> = decodeSolution(getSolution(), props.UIState.length);
+        const decodedSolution: Array<number> = decodeSolution(solution(), props.UIState.length);
         for(const [i, sol] of decodedSolution.entries()){
           const square = props.UIState[i];
           if(square != null && untrack(() => square.manValue()) === 0){
@@ -125,7 +125,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const updateAnimationStatus = (): void => {
     if(animationComplete === null) { return; }
     //check if any link is currently animating
-    const animating = getMatrix().allNodeMap((node: AlgXNode): boolean => {
+    const animating = matrix().allNodeMap((node: AlgXNode): boolean => {
       for(const link of Object.values(node.linkInfo)){
         if(link.animating){ return true; }
       }
@@ -138,14 +138,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawMatrix = (): void => {
     //shift canvas coordinates to allow negative node columns and rows (headers)
-    ctx.clearRect(0, 0, getWidth(), getHeight());
+    ctx.clearRect(0, 0, width(), height());
     ctx.fillStyle = canvasColor;
-    ctx.fillRect(0, 0, getWidth(), getHeight());
+    ctx.fillRect(0, 0, width(), height());
     ctx.save()
     ctx.translate(2*gridSize, 2*gridSize);
 
     //draw each node
-    getMatrix().allNodeMap((node: AlgXNode): void => {
+    matrix().allNodeMap((node: AlgXNode): void => {
       drawNode(node.nodeInfo);
     });
 
@@ -153,7 +153,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.beginPath()
     ctx.strokeStyle = linkColor;
     ctx.lineWidth = lineWidth;
-    getMatrix().allNodeMap((node: AlgXNode): void => {
+    matrix().allNodeMap((node: AlgXNode): void => {
       drawUpLink(node.linkInfo.up, node.nodeInfo, node.up.nodeInfo);
       drawDownLink(node.linkInfo.down, node.nodeInfo, node.down.nodeInfo);
       drawLeftLink(node.linkInfo.left, node.nodeInfo, node.left.nodeInfo);
@@ -168,8 +168,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(node.covered){ ctx.fillStyle = nodeCoveredColor; }
     if(node.focused){ ctx.fillStyle = nodeFocusedColor; }
     if(node.solution){ ctx.fillStyle = nodeSolutionColor; }
-    let x, y;
-    [x,y] = nodeTop(node);
+    let [x,y] = nodeTop(node);
     x -= nodeSize()/2;
     ctx.beginPath();
     ctx.rect(x, y, nodeSize(), nodeSize());
@@ -184,7 +183,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     //determine line lengths
     let wrapping = n2.row > n1.row;
     let line1Length = wrapping ? gridSize*n1.row + 1.5*gridSize : (n1.row - n2.row) * gridSize - nodeSize();
-    let line2Length = wrapping ? gridSize*(getMatrix().rows.length - n2.row) - 0.5*gridSize: 0;
+    let line2Length = wrapping ? gridSize*(matrix().rows.length - n2.row) - 0.5*gridSize: 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
     //move to top of node and draw the current length of link upward
@@ -211,7 +210,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     let wrapping = n2.row < n1.row;
-    let line1Length = wrapping ? gridSize*(getMatrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize();
+    let line1Length = wrapping ? gridSize*(matrix().rows.length - n1.row) - 0.5*gridSize: (n2.row - n1.row) * gridSize - nodeSize();
     let line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
@@ -240,7 +239,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     //determine line lengths
     let wrapping = n2.col > n1.col;
     let line1Length = wrapping ? gridSize*n1.col + 1.5*gridSize : (n1.col - n2.col) * gridSize - nodeSize();
-    let line2Length = wrapping ? gridSize*(getMatrix().cols.length - n2.col) - 0.5*gridSize : 0;
+    let line2Length = wrapping ? gridSize*(matrix().cols.length - n2.col) - 0.5*gridSize : 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
     //move to left of node and draw the current length of link leftward
@@ -267,7 +266,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     //determine line lengths
     let wrapping = n2.col < n1.col;
-    let line1Length = wrapping ? gridSize*(getMatrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize();
+    let line1Length = wrapping ? gridSize*(matrix().cols.length - n1.col) - 0.5*gridSize: (n2.col - n1.col) * gridSize - nodeSize();
     let line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
@@ -334,11 +333,11 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //button callbacks
   const solveCB = async (event: MouseEvent): Promise<void> => {
-    for(const update of getMatrix().animatedAlgXSearch()){
+    for(const update of matrix().animatedAlgXSearch()){
       if(turbo && !stepMode){
         //check if solution has been updated
-        const eq = getSolution().length === getMatrix().solution.length && 
-          getSolution().every((v, i) => v === getMatrix().solution[i])
+        const eq = solution().length === matrix().solution.length && 
+          solution().every((v, i) => v === matrix().solution[i])
         if(!eq){ //if solution has changed then wait a short amount of time
           await new Promise(res => setTimeout(res, 50))
         }
@@ -353,7 +352,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         await stepComplete;
         stepComplete = null;
       }
-      setSolution(getMatrix().solution.slice());
+      setSolution(matrix().solution.slice());
     }
   };
   const stepCB = (event: MouseEvent): void => {
@@ -378,6 +377,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         break;
       case 5:
         setNodeSize(11);
+        break;
+      case 6:
+        setNodeSize(13);
         break;
       default:
     }
@@ -425,13 +427,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <button onClick={solveCB}> solve </button>
         <button onClick={stepCB}> step </button>
         <button onClick={enableStepModeCB}> stepMode </button>
-        <input type='range' id='scale' ref={scaleSlider} min='1' max='5' onInput={scaleSliderCB}/>
+        <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
       <div className='solution'>
-        {getSolution().length > 0 ? getSolution().join(' ') : '\u00A0'}
+        {solution().length > 0 ? solution().join(' ') : '\u00A0'}
       </div>
-      <canvas ref={canvas} width={getWidth()} height={getHeight()}/>
+      <canvas ref={canvas} width={width()} height={height()}/>
     </div>
   );
 }
