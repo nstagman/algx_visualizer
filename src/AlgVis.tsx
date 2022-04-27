@@ -1,5 +1,5 @@
 import './AlgVis.css'
-import { AlgXMatrix, AlgXNode, buildMatrix, buildSudMatrix, decodeSolution } from './AlgX';
+import { AlgXNode, buildMatrix, buildSudMatrix, decodeSolution } from './AlgX';
 import { JSXElement, Component, createSignal, createEffect, onMount, batch, untrack } from 'solid-js';
 
 
@@ -144,12 +144,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx.save()
     ctx.translate(2*gridSize, 2*gridSize);
 
-    //draw each node
     matrix().allNodeMap((node: AlgXNode): void => {
       drawNode(node.nodeInfo);
     });
 
-    //draw all 4 links of each node
     ctx.beginPath()
     ctx.strokeStyle = linkColor;
     ctx.lineWidth = lineWidth;

@@ -1,5 +1,5 @@
 import './App.css'
-import { Component, createSignal, onMount, batch } from 'solid-js';
+import { Component, createSignal, batch } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
 import { AlgXAnimator } from './AlgVis';
 
@@ -69,21 +69,23 @@ const AlgorithmVisualizer: Component = () => {
 
   //restore the manually entered values of current boardstate from respective array
   const restoreBoardState = () => {
-    if(UI() === UIType.fxf){
-      for(const [i, val] of fxfBak.entries()){
-        boardState()[i].setManValue(val);
+    batch(() => {
+      if(UI() === UIType.fxf){
+        for(const [i, val] of fxfBak.entries()){
+          boardState()[i].setManValue(val);
+        }
       }
-    }
-    else if(UI() === UIType.nxn){
-      for(const [i, val] of nxnBak.entries()){
-        boardState()[i].setManValue(val);
+      else if(UI() === UIType.nxn){
+        for(const [i, val] of nxnBak.entries()){
+          boardState()[i].setManValue(val);
+        }
       }
-    }
-    else if(UI() === UIType.matrix){
-      for(const [i, val] of customBak.entries()){
-        boardState()[i].setManValue(val);
+      else if(UI() === UIType.matrix){
+        for(const [i, val] of customBak.entries()){
+          boardState()[i].setManValue(val);
+        }
       }
-    }
+    });
   };
 
   //change ui to 4x4 sudoku

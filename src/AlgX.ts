@@ -274,11 +274,6 @@ class AlgXMatrix {
       if(this.solved){ break; }
 
       this.solution.pop();
-      //unhighlight partial solution
-      for(const node of solSearchNode.iterateRight(false)){
-        node.nodeInfo.solution = false;
-      }
-      yield 0;
 
       // -- Uncover Partial Solution
       //for each node in selected row
@@ -340,6 +335,13 @@ class AlgXMatrix {
           colNode.nodeInfo.covered = false;
         }
       }
+
+      //unhighlight partial solution
+      for(const node of solSearchNode.iterateRight(false)){
+        node.nodeInfo.solution = false;
+      }
+      yield 0;
+      
     }
     this.focusNode(this.root)
     yield 0;

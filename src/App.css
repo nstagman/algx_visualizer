@@ -4,7 +4,7 @@
   --btn-color: white;
   --btn-text-color: #2f78ec;
   --btn-border-color: #2f78ec;
-  --btn-hover-color: rgba(34, 100, 206, 0.75);
+  --btn-hover-color: #2264cebf;
   --btn-hover-text-color: white;
   --btn-hover-border-color: #275fb9;
   --btn-sel-color: #175cca;
@@ -30,6 +30,7 @@
   padding: 3px 8px;
   background-color: var(--btn-color);
   border: 1px solid var(--btn-border-color);
+  box-shadow: rgba(0, 0, 0, .2) 0 3px 5px -1px,rgba(0, 0, 0, .14) 0 6px 10px 0,rgba(0, 0, 0, .12) 0 1px 18px 0;
   border-radius: 4px;
   font-family: 'Ubuntu',sans-serif;
   font-size: 16px;
@@ -57,7 +58,7 @@
 
 
 /* CSS */
-.button-17 {
+.button17 {
   align-items: center;
   appearance: none;
   background-color: #fff;
@@ -91,37 +92,37 @@
   z-index: 0;
 }
 
-.button-17:hover {
+.button17:hover {
   background: #F6F9FE;
   color: #174ea6;
 }
 
-.button-17:active {
+.button17:active {
   box-shadow: 0 4px 4px 0 rgb(60 64 67 / 30%), 0 8px 12px 6px rgb(60 64 67 / 15%);
   outline: none;
 }
 
-.button-17:focus {
+.button17:focus {
   outline: none;
   border: 2px solid #4285f4;
 }
 
-.button-17:not(:disabled) {
+.button17:not(:disabled) {
   box-shadow: rgba(60, 64, 67, .3) 0 1px 3px 0, rgba(60, 64, 67, .15) 0 4px 8px 3px;
 }
 
-.button-17:not(:disabled):hover {
+.button17:not(:disabled):hover {
   box-shadow: rgba(60, 64, 67, .3) 0 2px 3px 0, rgba(60, 64, 67, .15) 0 6px 10px 4px;
 }
 
-.button-17:not(:disabled):focus {
+.button17:not(:disabled):focus {
   box-shadow: rgba(60, 64, 67, .3) 0 1px 3px 0, rgba(60, 64, 67, .15) 0 4px 8px 3px;
 }
 
-.button-17:not(:disabled):active {
+.button17:not(:disabled):active {
   box-shadow: rgba(60, 64, 67, .3) 0 4px 4px 0, rgba(60, 64, 67, .15) 0 8px 12px 6px;
 }
 
-.button-17:disabled {
+.button17:disabled {
   box-shadow: rgba(60, 64, 67, .3) 0 1px 3px 0, rgba(60, 64, 67, .15) 0 4px 8px 3px;
 }
