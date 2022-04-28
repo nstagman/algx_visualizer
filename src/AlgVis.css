@@ -1,4 +1,40 @@
+.Animator{
+  margin: 1em;
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto;
+}
+
+.Animator .btns{
+  grid-area: 0 0 0 1;
+}
+
+.Animator button{
+  padding: 3px 8px;
+  background-color: var(--btn-color);
+  border-width: 1px 0px 1px 1px;
+  border-style: solid;
+  border-color: var(--btn-border-color);
+  font-family: 'Ubuntu',sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--btn-text-color);
+  text-align: center;
+}
+.Animator .btns button:last-of-type{
+  border-width: 1px;
+}
+
+.Animator .inputs .labels{
+  grid-area: 0 2 0 2;
+}
+
+.Animator .inputs .sliders{
+  grid-area: 0 3 0 3;
+}
+
 canvas {
   margin: 1em;
+  box-shadow: rgba(0, 0, 0, .2) 0 3px 5px -1px,rgba(0, 0, 0, .14) 0 6px 10px 0,rgba(0, 0, 0, .12) 0 1px 18px 0;
   /* border: 1px solid black; */
 }

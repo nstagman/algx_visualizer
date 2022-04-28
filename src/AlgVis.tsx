@@ -421,17 +421,28 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //return the solidjs component
   return(
     <div className='Animator'>
-      <div>
-        <button onClick={solveCB}> solve </button>
-        <button onClick={stepCB}> step </button>
-        <button onClick={enableStepModeCB}> stepMode </button>
-        <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
-        <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
+      <div className='inputs'>
+        <div className='btns'>
+          <button onClick={solveCB}> solve </button>
+          <button onClick={stepCB}> step </button>
+          <button onClick={enableStepModeCB}> stepMode </button>
+        </div>
+        <div className='labels'>
+            <label for='scale'>size</label>
+            <label for='speed'>speed</label>
+        </div>
+        <div className='sliders'>
+          <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
+          <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
+        </div>
       </div>
       <div className='solution'>
         {solution().length > 0 ? solution().join(' ') : '\u00A0'}
       </div>
-      <canvas ref={canvas} width={width()} height={height()}/>
+      <div className='canvasRow'>
+
+        <canvas ref={canvas} width={width()} height={height()}/>
+      </div>
     </div>
   );
 }
