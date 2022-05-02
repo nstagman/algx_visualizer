@@ -30,6 +30,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [height, setHeight] = createSignal(1);
   const [matrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
   const [solution, setSolution] = createSignal(matrix().solution.slice());
+  const [play, setPlay] = createSignal(true);
 
   //component state variables
   let linkLen = nodeSize();
@@ -353,12 +354,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       setSolution(matrix().solution.slice());
     }
   };
+
   const stepCB = (event: MouseEvent): void => {
     if(stepComplete !== null){ stepComplete.resolve(true); }
   };
+
   const enableStepModeCB = (event: MouseEvent): void => {
     stepMode = stepMode ? false : true;
   };
+
+  const restartCB = (event: MouseEvent): void => {
+    props.UIState[0].setManValue(props.UIState[0].manValue());
+  };
+
   const scaleSliderCB = (event: Event): void => {
     switch(Number(scaleSlider.value)){
       case 1:
@@ -382,6 +390,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       default:
     }
   };
+
   const speedSliderCB = (event: Event): void => {
     turbo = false;
     switch(Number(speedSlider.value)){
@@ -423,24 +432,22 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     <div className='Animator'>
       <div className='inputs'>
         <div className='btns'>
-          <button onClick={solveCB}> solve </button>
-          <button onClick={stepCB}> step </button>
+          <button classList={{play: play(), pause: !play()}} onClick={solveCB}> solve </button>
+          <button id='stepBtn' onClick={stepCB}> step </button>
           <button onClick={enableStepModeCB}> stepMode </button>
+          <button id='restartBtn' onClick={restartCB}> restart </button>
         </div>
-        <div className='labels'>
-            <label for='scale'>size</label>
-            <label for='speed'>speed</label>
-        </div>
-        <div className='sliders'>
-          <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
-          <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
-        </div>
+        <label id='scaleL' for='scale'>scale</label>
+        <label id='speedL' for='speed'>speed</label>
+        <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
+        <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
-      <div className='solution'>
-        {solution().length > 0 ? solution().join(' ') : '\u00A0'}
+      {/* <button id='play-pause' classList={{play: play(), pause: !play()}} onClick={solveCB}>  </button> */}
+      <div className='solutionContainer'>
+        <span>Solution:</span>
+        <span id='solution'>{solution().length > 0 ? solution().join(' ') : '\u00A0'}</span>
       </div>
-      <div className='canvasRow'>
-
+      <div className='canvasContainer'>
         <canvas ref={canvas} width={width()} height={height()}/>
       </div>
     </div>
