@@ -42,7 +42,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let animationComplete: any | null = null;
   let animationStep = 5;
   let stepComplete: any | null = null;
-  let stepMode: boolean = false;
+  let searching: boolean = false;
   let scaleSlider: any;
   let speedSlider: any;
   let turbo: boolean = false; //skip animation and only update on solution change
@@ -61,6 +61,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
     if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
+    searching = false;
+    untrack(() => { updateNodeSize(); });
   };
 
   //updates the canvas size to draw full matrix
@@ -331,9 +333,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   //button callbacks
-  const solveCB = async (event: MouseEvent): Promise<void> => {
+  const solve = async (): Promise<void> => {
     for(const update of matrix().animatedAlgXSearch()){
-      if(turbo && !stepMode){
+      if(turbo && play()){
         //check if solution has been updated
         const eq = solution().length === matrix().solution.length && 
           solution().every((v, i) => v === matrix().solution[i])
@@ -341,12 +343,12 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
           await new Promise(res => setTimeout(res, 50))
         }
       }
-      else if((update === 0 || stepMode) && !turbo){ //no timeout specified - wait for animator to finish this step
+      else if((update === 0 || !play()) && !turbo){ //no timeout specified - wait for animator to finish this step
         animationComplete = getExposedPromise();
         await animationComplete;
         animationComplete = null;
       }
-      if(stepMode){
+      if(!play()){
         stepComplete = getExposedPromise();
         await stepComplete;
         stepComplete = null;
@@ -355,40 +357,62 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
 
-  const stepCB = (event: MouseEvent): void => {
-    if(stepComplete !== null){ stepComplete.resolve(true); }
-  };
+  const playCB = async (event: MouseEvent): Promise<void> => {
+    if(!searching){
+      searching = true;
+      setPlay(true);
+      await solve();
+      return;
+    }
+    if(play()){
+      setPlay(false);
+    }
+    if(!play() && stepComplete !== null){
+      setPlay(true);
+      stepComplete.resolve(true);
+    }
+  }
 
-  const enableStepModeCB = (event: MouseEvent): void => {
-    stepMode = stepMode ? false : true;
+  const stepCB = (event: MouseEvent): void => {
+    if(play()){
+      setPlay(false);
+    }
+    if(!play() && stepComplete !== null){
+      stepComplete.resolve(true);
+    }
   };
 
   const restartCB = (event: MouseEvent): void => {
     props.UIState[0].setManValue(props.UIState[0].manValue());
   };
 
-  const scaleSliderCB = (event: Event): void => {
+  const updateNodeSize = (): void => {
+    const base = matrix().rows.length > 300 ? 1 : 3
     switch(Number(scaleSlider.value)){
       case 1:
-        setNodeSize(3);
+        setNodeSize(base);
         break;
       case 2:
-        setNodeSize(5);
+        setNodeSize(base+2);
         break;
       case 3:
-        setNodeSize(7);
+        setNodeSize(base+4);
         break;
       case 4:
-        setNodeSize(9);
+        setNodeSize(base+6);
         break;
       case 5:
-        setNodeSize(11);
+        setNodeSize(base+8);
         break;
       case 6:
-        setNodeSize(13);
+        setNodeSize(base+10);
         break;
       default:
     }
+  }
+
+  const scaleSliderCB = (event: Event): void => {
+    updateNodeSize();
   };
 
   const speedSliderCB = (event: Event): void => {
@@ -427,14 +451,34 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     return promise;
   };
 
+  const playb =
+  <svg xmlns="http://www.w3.org/2000/svg">
+    <polygon points="9.33 6.69 9.33 19.39 19.3 13.04 9.33 6.69"/>
+  </svg>
+
+  const pauseb =
+  <svg xmlns="http://www.w3.org/2000/svg">
+    <path d="M 11 10 L 17 10 L 17 26 L 11 26 M 20 10 L 26 10 L 26 26 L 20 26"></path>
+  </svg>
+
+  const circleb =
+  <svg xmlns="http://www.w3.org/2000/svg" width='568.017px' height='568.017px' viewBox='0 0 568.017 568.017'>
+    <path d="M72.553,400.503c11.12,11.119,29.156,11.119,40.282,0l71.849-83.238c11.12-11.119,7.387-20.141-8.342-20.141h-46.444
+      c-3.929-52.24,14.688-104.059,52.999-142.37c71.194-71.188,187.022-71.188,258.209,0c34.486,34.486,53.477,80.331,53.477,129.102
+      c0,48.77-18.996,94.616-53.477,129.102c-49.395,49.395-121.219,66.23-187.511,43.936c-19.205-6.488-40.043,3.867-46.512,23.09
+      c-6.469,19.223,3.868,40.043,23.09,46.512c27.124,9.131,54.903,13.574,82.388,13.574c66.623,0,131.439-26.156,180.461-75.184
+      c48.36-48.355,74.994-112.645,74.994-181.036c0-68.392-26.634-132.676-74.994-181.036c-99.823-99.823-262.243-99.823-362.06,0
+      c-52.424,52.424-78.636,122.871-74.75,194.304H14.744c-15.728,0-19.461,9.014-8.341,20.141L72.553,400.503z"
+    />
+  </svg>
+
   //return the solidjs component
   return(
     <div className='Animator'>
       <div className='inputs'>
         <div className='btns'>
-          <button classList={{play: play(), pause: !play()}} onClick={solveCB}> solve </button>
+          <button classList={{play: play(), pause: !play()}} onClick={playCB}> play/pause </button>
           <button id='stepBtn' onClick={stepCB}> step </button>
-          <button onClick={enableStepModeCB}> stepMode </button>
           <button id='restartBtn' onClick={restartCB}> restart </button>
         </div>
         <label id='scaleL' for='scale'>scale</label>
@@ -442,7 +486,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
-      {/* <button id='play-pause' classList={{play: play(), pause: !play()}} onClick={solveCB}>  </button> */}
+      {/* {playb}
+      {pauseb}
+      {circleb} */}
       <div className='solutionContainer'>
         <span>Solution:</span>
         <span id='solution'>{solution().length > 0 ? solution().join(' ') : '\u00A0'}</span>
