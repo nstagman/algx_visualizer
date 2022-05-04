@@ -30,7 +30,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [height, setHeight] = createSignal(1);
   const [matrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
   const [solution, setSolution] = createSignal(matrix().solution.slice());
-  const [play, setPlay] = createSignal(true);
+  const [play, setPlay] = createSignal(false);
 
   //component state variables
   let linkLen = nodeSize();
@@ -62,6 +62,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
     searching = false;
+    setPlay(false);
     untrack(() => { updateNodeSize(); });
   };
 
@@ -451,44 +452,20 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     return promise;
   };
 
-  const playb =
-  <svg xmlns="http://www.w3.org/2000/svg">
-    <polygon points="9.33 6.69 9.33 19.39 19.3 13.04 9.33 6.69"/>
-  </svg>
-
-  const pauseb =
-  <svg xmlns="http://www.w3.org/2000/svg">
-    <path d="M 11 10 L 17 10 L 17 26 L 11 26 M 20 10 L 26 10 L 26 26 L 20 26"></path>
-  </svg>
-
-  const circleb =
-  <svg xmlns="http://www.w3.org/2000/svg" width='568.017px' height='568.017px' viewBox='0 0 568.017 568.017'>
-    <path d="M72.553,400.503c11.12,11.119,29.156,11.119,40.282,0l71.849-83.238c11.12-11.119,7.387-20.141-8.342-20.141h-46.444
-      c-3.929-52.24,14.688-104.059,52.999-142.37c71.194-71.188,187.022-71.188,258.209,0c34.486,34.486,53.477,80.331,53.477,129.102
-      c0,48.77-18.996,94.616-53.477,129.102c-49.395,49.395-121.219,66.23-187.511,43.936c-19.205-6.488-40.043,3.867-46.512,23.09
-      c-6.469,19.223,3.868,40.043,23.09,46.512c27.124,9.131,54.903,13.574,82.388,13.574c66.623,0,131.439-26.156,180.461-75.184
-      c48.36-48.355,74.994-112.645,74.994-181.036c0-68.392-26.634-132.676-74.994-181.036c-99.823-99.823-262.243-99.823-362.06,0
-      c-52.424,52.424-78.636,122.871-74.75,194.304H14.744c-15.728,0-19.461,9.014-8.341,20.141L72.553,400.503z"
-    />
-  </svg>
-
   //return the solidjs component
   return(
     <div className='Animator'>
       <div className='inputs'>
-        <div className='btns'>
-          <button classList={{play: play(), pause: !play()}} onClick={playCB}> play/pause </button>
+        {/* <div className='btns'> */}
+          <button id='solveBtn' classList={{play: play(), pause: !play()}} onClick={playCB}> Solve </button>
           <button id='stepBtn' onClick={stepCB}> step </button>
           <button id='restartBtn' onClick={restartCB}> restart </button>
-        </div>
+        {/* </div> */}
         <label id='scaleL' for='scale'>scale</label>
         <label id='speedL' for='speed'>speed</label>
         <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
-      {/* {playb}
-      {pauseb}
-      {circleb} */}
       <div className='solutionContainer'>
         <span>Solution:</span>
         <span id='solution'>{solution().length > 0 ? solution().join(' ') : '\u00A0'}</span>
