@@ -39,9 +39,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let ctx: CanvasRenderingContext2D;
   let lastUpdate: number;
   let elapsedTicks: number = 0;
-  let animationComplete: any | null = null;
+  let animationComplete: any = null;
   let animationStep = 5;
-  let stepComplete: any | null = null;
+  let stepComplete: any = null;
   let searching: boolean = false;
   let scaleSlider: any;
   let speedSlider: any;
@@ -64,6 +64,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     searching = false;
     setPlay(false);
     untrack(() => { updateNodeSize(); });
+    if(stepComplete !== null){ stepComplete.resolve(true); }
+    if(animationComplete !== null){ animationComplete.resolve(true); }
   };
 
   //updates the canvas size to draw full matrix
@@ -345,17 +347,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         }
       }
       else if((update === 0 || !play()) && !turbo){ //no timeout specified - wait for animator to finish this step
-        animationComplete = getExposedPromise();
+        animationComplete = exposedPromise();
         await animationComplete;
         animationComplete = null;
       }
-      if(!play()){
-        stepComplete = getExposedPromise();
+      else if(!play()){
+        stepComplete = exposedPromise();
         await stepComplete;
         stepComplete = null;
       }
+      if(!searching) { break; }
       setSolution(matrix().solution.slice());
     }
+    console.log('finished')
   };
 
   const playCB = async (event: MouseEvent): Promise<void> => {
@@ -365,21 +369,21 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       await solve();
       return;
     }
-    if(play()){
-      setPlay(false);
-    }
     if(!play() && stepComplete !== null){
       setPlay(true);
       stepComplete.resolve(true);
     }
+    else if(play()){
+      setPlay(false);
+    }
   }
 
   const stepCB = (event: MouseEvent): void => {
-    if(play()){
-      setPlay(false);
-    }
     if(!play() && stepComplete !== null){
       stepComplete.resolve(true);
+    }
+    else if(play()){
+      setPlay(false);
     }
   };
 
@@ -441,7 +445,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //returns a promise object with exposed resolve and reject handles
   //this is used to let the canvas update loop tell the AlgXSearch that animation has finished
-  const getExposedPromise = (): any => {
+  const exposedPromise = (): any => {
     let res, rej, promise: any;
     promise = new Promise((_res, _rej) => {
       res = _res;
@@ -456,11 +460,9 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   return(
     <div className='Animator'>
       <div className='inputs'>
-        {/* <div className='btns'> */}
-          <button id='solveBtn' classList={{play: play(), pause: !play()}} onClick={playCB}> Solve </button>
-          <button id='stepBtn' onClick={stepCB}> step </button>
-          <button id='restartBtn' onClick={restartCB}> restart </button>
-        {/* </div> */}
+        <button id='solveBtn' classList={{play: play(), pause: !play()}} onClick={playCB}> Solve </button>
+        <button id='stepBtn' onClick={stepCB}> step </button>
+        <button id='restartBtn' onClick={restartCB}> restart </button>
         <label id='scaleL' for='scale'>scale</label>
         <label id='speedL' for='speed'>speed</label>
         <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
@@ -468,7 +470,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       </div>
       <div className='solutionContainer'>
         <span>Solution:</span>
-        <span id='solution'>{solution().length > 0 ? solution().join(' ') : '\u00A0'}</span>
+        <span id='solution'>{solution().length > 0 ? (solution().join(' ')) + '\u00A0'.repeat(10) : '\u00A0'.repeat(10)}</span>
       </div>
       <div className='canvasContainer'>
         <canvas ref={canvas} width={width()} height={height()}/>
