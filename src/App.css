@@ -13,9 +13,11 @@
   --btn-focus-border-color: #234b8d;
 
   --board-background-color: black;
-  --square-background-color: whitesmoke;
-  --square-focus-color: goldenrod;
-  --square-solution-color: lawngreen;
+  --square-background-color: white;
+  --square-focus-color: rgb(218, 165, 32);
+  --square-solution-color: rgb(134, 248, 153);
+
+  --nodecol: rgba(11, 127, 171, 1.0);
 }
 .UXBlock{
   display: flex;
@@ -50,4 +52,9 @@
 .UXBlock button:focus {
   outline-offset: 0.1em;
   outline-color: var(--btn-focus-border-color);
+}
+.UXBlock button:active{
+  background-color: goldenrod;
+  color: var(--btn-sel-text-color);
+  border: 1px solid var(--btn-sel-border-color);
 }

@@ -27,7 +27,7 @@
   outline-color: var(--btn-focus-border-color);
 }
 .Animator button:active{
-  background-color: var(--btn-sel-color);
+  background-color: goldenrod;
   color: var(--btn-sel-text-color);
   border: 1px solid var(--btn-sel-border-color);
 }
@@ -108,7 +108,7 @@
   border-width: 2px;
   border-style: solid;
   border-image-slice: 1;
-  border-image-source: linear-gradient(to left, #ffffff, #000000);
+  border-image-source: linear-gradient(to left, rgb(220, 220, 220), #000000);
   min-width: 5rem;
 }
 

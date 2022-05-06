@@ -13,14 +13,13 @@ type LinkDrawInfo = {
 };
 
 const AlgXAnimator: Component<any> = (props: any): JSXElement => {
-  const canvasColor = 'rgba(0, 0, 0, 1.0)';
-  const nodeColor = 'rgba(11, 127, 171, 1.0)';
-  const nodeCoveredColor = 'rgba(193, 208, 240, 1.0)';
-  const nodeFocusedColor = 'rgba(255, 225, 75, 1.0)';
-  const nodeSolutionColor = 'rgba(10, 240, 140, 1.0)';
-  const linkColor = 'rgba(153, 51, 51, 1.0)';
-  const linkCoveredColor = '#CCCCCC';
-  const lineWidth = 1;
+  const canvasColor = '#ffffff';
+  const nodeColor = '#2f78ec';
+  const nodeCoveredColor = 'rgb(165, 178, 206)';
+  const nodeFocusedColor = 'rgb(209, 150, 0)';
+  const nodeSolutionColor = 'rgb(54, 216, 108)';
+  const linkColor = '#000000';
+
   const hz = 60; //target fps
   const tickRate = 1000/hz; //normalized animation update time
 
@@ -156,7 +155,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
     ctx.beginPath()
     ctx.strokeStyle = linkColor;
-    ctx.lineWidth = lineWidth;
+    ctx.lineWidth = 1;
     matrix().allNodeMap((node: AlgXNode): void => {
       drawUpLink(node.linkInfo.up, node.nodeInfo, node.up.nodeInfo);
       drawDownLink(node.linkInfo.down, node.nodeInfo, node.down.nodeInfo);
@@ -170,8 +169,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const drawNode = (node: NodeDrawInfo):void => {
     ctx.fillStyle = nodeColor;
     if(node.covered){ ctx.fillStyle = nodeCoveredColor; }
-    if(node.focused){ ctx.fillStyle = nodeFocusedColor; }
     if(node.solution){ ctx.fillStyle = nodeSolutionColor; }
+    if(node.focused){ ctx.fillStyle = nodeFocusedColor; }
     let [x,y] = nodeTop(node);
     x -= nodeSize()/2;
     ctx.beginPath();
@@ -351,15 +350,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         await animationComplete;
         animationComplete = null;
       }
-      else if(!play()){
+      if(!searching) { break; }
+      if(!play()){
         stepComplete = exposedPromise();
         await stepComplete;
         stepComplete = null;
       }
-      if(!searching) { break; }
       setSolution(matrix().solution.slice());
     }
-    console.log('finished')
   };
 
   const playCB = async (event: MouseEvent): Promise<void> => {
