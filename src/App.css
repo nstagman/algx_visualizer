@@ -44,10 +44,8 @@
   color: var(--btn-sel-text-color);
   border: 1px solid var(--btn-sel-border-color);
 }
-.UXBlock button:hover {
-  background-color: var(--btn-hover-color);
-  color: var(--btn-hover-text-color);
-  border: 1px solid var(--btn-hover-border-color);
+.UXBlock button:hover{
+  cursor: pointer;
 }
 .UXBlock button:focus {
   outline-offset: 0.1em;

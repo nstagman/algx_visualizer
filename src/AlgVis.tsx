@@ -62,13 +62,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
     searching = false;
     setPlay(false);
-    untrack(() => { updateNodeSize(); });
     if(stepComplete !== null){ stepComplete.resolve(true); }
     if(animationComplete !== null){ animationComplete.resolve(true); }
   };
 
   //updates the canvas size to draw full matrix
   const updateCanvasSize = (): void => {
+    untrack(() => { updateNodeSize(); });
     linkLen = nodeSize();
     gridSize = nodeSize() + linkLen;
     setWidth(gridSize * matrix().cols.length + gridSize*2.5);

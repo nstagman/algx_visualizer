@@ -17,14 +17,13 @@
   color: var(--btn-text-color);
   text-align: center;
 }
-.Animator button:hover {
-  background-color: var(--btn-hover-color);
-  color: var(--btn-hover-text-color);
-  border: 1px solid var(--btn-hover-border-color);
-}
+
 .Animator button:focus {
   outline-offset: 0.1em;
   outline-color: var(--btn-focus-border-color);
+}
+.Animator button:hover{
+  cursor: pointer;
 }
 .Animator button:active{
   background-color: goldenrod;
@@ -44,6 +43,7 @@
   color: var(--btn-sel-text-color);
   border: 1px solid var(--btn-sel-border-color);
 }
+
 .Animator #stepBtn{
   margin-left: 0.5rem;
   border-right: 0px;
@@ -65,7 +65,6 @@
   font-size: 13px;
   font-weight: 700;
 }
-
 .Animator .inputs label{
   font-family: 'Ubuntu',sans-serif;
   margin-right: 0.3rem;
@@ -111,7 +110,6 @@
   border-image-source: linear-gradient(to left, rgb(220, 220, 220), #000000);
   min-width: 5rem;
 }
-
 
 canvas {
   box-shadow: rgba(0, 0, 0, .2) 0 3px 5px -1px,rgba(0, 0, 0, .14) 0 6px 10px 0,rgba(0, 0, 0, .12) 0 1px 18px 0;

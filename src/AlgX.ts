@@ -78,6 +78,7 @@ class AlgXMatrix {
   cols: Array<AlgXNode>;
   solved: boolean;
   solution: Array<number>;
+  phase: string;
   focusedNode: AlgXNode;
   focusedCol?: number;
 
@@ -87,6 +88,7 @@ class AlgXMatrix {
     this.cols = []; //header nodes for cols
     this.solved = false;
     this.solution = [];
+    this.phase = '';
     this.focusedNode = this.root;
 
     //instantiate row and col headers for matrix
@@ -223,6 +225,7 @@ class AlgXMatrix {
         coverCol.linkInfo.right.animating = false;
         this.unlinkAniUpdate(coverCol.left.linkInfo.right);
         this.unlinkAniUpdate(coverCol.right.linkInfo.left);
+        this.phase = 'Cover Column ' + node.col;
         yield 0;
 
         //relink new links around header
@@ -247,6 +250,7 @@ class AlgXMatrix {
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
             this.unlinkAniUpdate(rowNode.down.linkInfo.up);
           }
+          this.phase = 'Cover Row ' + colNode.row;
           yield 0;
 
           //update animation info for relinking newly assigned links around the row
@@ -285,6 +289,7 @@ class AlgXMatrix {
         let uncoverCol = this.cols[node.col];
         this.focusNode(uncoverCol);
         this.unlinkAniUpdate(uncoverCol.left.linkInfo.right);
+        this.phase = 'Uncover Column ' + node.col;
         yield 0;
 
         //relink column header
@@ -310,6 +315,7 @@ class AlgXMatrix {
             rowNode.down.linkInfo.up.animating = false;
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
           }
+          this.phase = 'Uncover Row ' + colNode.row;
           yield 0;
 
           //relink each node in the row
@@ -341,9 +347,10 @@ class AlgXMatrix {
         node.nodeInfo.solution = false;
       }
       yield 0;
-      
     }
+
     this.focusNode(this.root)
+    this.phase = this.solved ? 'Solution Found' : 'Solution Does Not Exist';
     yield 0;
     return this.solved;
   }
