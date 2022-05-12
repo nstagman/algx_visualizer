@@ -29,6 +29,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [height, setHeight] = createSignal(1);
   const [matrix, setMatrix] = createSignal(buildMatrix([0,0], 1, 1));
   const [solution, setSolution] = createSignal(matrix().solution.slice());
+  const [phase, setPhase] = createSignal(matrix().phase);
   const [play, setPlay] = createSignal(false);
 
   //component state variables
@@ -74,6 +75,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     setWidth(gridSize * matrix().cols.length + gridSize*2.5);
     setHeight(gridSize * matrix().rows.length + gridSize*2.5);
     setSolution(matrix().solution.slice());
+    setPhase(matrix().phase);
   };
 
   //updates the solution flag for each square in the UI board
@@ -337,11 +339,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //button callbacks
   const solve = async (): Promise<void> => {
     for(const update of matrix().animatedAlgXSearch()){
+      if(!turbo) { setSolution(matrix().solution.slice()); }
+      setPhase(matrix().phase);
       if(turbo && play()){
         //check if solution has been updated
         const eq = solution().length === matrix().solution.length && 
           solution().every((v, i) => v === matrix().solution[i])
         if(!eq){ //if solution has changed then wait a short amount of time
+          setSolution(matrix().solution.slice());
           await new Promise(res => setTimeout(res, 50))
         }
       }
@@ -356,7 +361,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         await stepComplete;
         stepComplete = null;
       }
-      setSolution(matrix().solution.slice());
     }
   };
 
@@ -467,7 +471,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
       <div className='solutionContainer'>
-        <span>Solution:</span>
+        <span id='phase'>{phase().length > 0 ? phase() : '\u00A0'}</span>
         <span id='solution'>{solution().length > 0 ? (solution().join(' ')) + '\u00A0'.repeat(10) : '\u00A0'.repeat(10)}</span>
       </div>
       <div className='canvasContainer'>

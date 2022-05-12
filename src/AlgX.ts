@@ -209,6 +209,7 @@ class AlgXMatrix {
       for(const node of solSearchNode.iterateRight(false)){
         node.nodeInfo.solution = true;
       }
+      this.phase = 'Row ' + solSearchNode.row + ' selected as partial solution';
       yield 0;
 
       // -- Cover Partial Solution
@@ -225,7 +226,7 @@ class AlgXMatrix {
         coverCol.linkInfo.right.animating = false;
         this.unlinkAniUpdate(coverCol.left.linkInfo.right);
         this.unlinkAniUpdate(coverCol.right.linkInfo.left);
-        this.phase = 'Cover Column ' + node.col;
+        this.phase = 'Row ' + solSearchNode.row + ' selected as partial solution: Covering Column ' + node.col;
         yield 0;
 
         //relink new links around header
@@ -250,7 +251,7 @@ class AlgXMatrix {
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
             this.unlinkAniUpdate(rowNode.down.linkInfo.up);
           }
-          this.phase = 'Cover Row ' + colNode.row;
+          this.phase = 'Row ' + solSearchNode.row + ' selected as partial solution: Covering Row ' + colNode.row;
           yield 0;
 
           //update animation info for relinking newly assigned links around the row
@@ -277,7 +278,7 @@ class AlgXMatrix {
       for(const yieldVal of this.animatedAlgXSearch()){ yield yieldVal; }
       if(this.solved){ break; }
 
-      this.solution.pop();
+      // this.solution.pop();
 
       // -- Uncover Partial Solution
       //for each node in selected row
@@ -289,7 +290,7 @@ class AlgXMatrix {
         let uncoverCol = this.cols[node.col];
         this.focusNode(uncoverCol);
         this.unlinkAniUpdate(uncoverCol.left.linkInfo.right);
-        this.phase = 'Uncover Column ' + node.col;
+        this.phase = 'Row ' + solSearchNode.row + ' is not part of the solution: Uncovering Column ' + node.col;
         yield 0;
 
         //relink column header
@@ -315,7 +316,7 @@ class AlgXMatrix {
             rowNode.down.linkInfo.up.animating = false;
             this.unlinkAniUpdate(rowNode.up.linkInfo.down);
           }
-          this.phase = 'Uncover Row ' + colNode.row;
+          this.phase = 'Row ' + solSearchNode.row + ' is not part of the solution: Uncovering Row ' + colNode.row;
           yield 0;
 
           //relink each node in the row
@@ -342,10 +343,12 @@ class AlgXMatrix {
         }
       }
 
+      this.solution.pop();
       //unhighlight partial solution
       for(const node of solSearchNode.iterateRight(false)){
         node.nodeInfo.solution = false;
       }
+      this.phase = 'Row ' + solSearchNode.row + ' removed from partial solution';
       yield 0;
     }
 
