@@ -470,6 +470,14 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
       </div>
+      <div className='legend'>
+        <div id='uncoveredColor'></div>
+        <div id='uncoveredText'></div>
+        <div id='coveredColor'></div>
+        <div id='coveredText'></div>
+        <div id='solutionColor'></div>
+        <div id='solutionText'></div>
+      </div>
       <div className='solutionContainer'>
         <span id='phase'>{phase().length > 0 ? phase() : '\u00A0'}</span>
         <span id='solution'>{solution().length > 0 ? (solution().join(' ')) + '\u00A0'.repeat(10) : '\u00A0'.repeat(10)}</span>
