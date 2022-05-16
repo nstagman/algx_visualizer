@@ -35,6 +35,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //component state variables
   let linkLen = nodeSize();
   let gridSize = nodeSize() + linkLen
+  let drawLinks: boolean = false;
   let canvas: any;
   let ctx: CanvasRenderingContext2D;
   let lastUpdate: number;
@@ -45,6 +46,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   let searching: boolean = false;
   let scaleSlider: any;
   let speedSlider: any;
+  let drawLinksBox: any;
   let turbo: boolean = false; //skip animation and only update on solution change
 
 
@@ -191,19 +193,21 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     let line2Length = wrapping ? gridSize*(matrix().rows.length - n2.row) - 0.5*gridSize: 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
-    //move to top of node and draw the current length of link upward
-    let [x,y] = nodeTop(n1);
-    ctx.moveTo(x, y);
-    ctx.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
-
-    //draw second line if wrapping
-    if(currentLength > line1Length && wrapping){
-      currentLength -= line1Length; //remove already drawn portion of length
-      //move to bottom of matrix and draw remainder of link towards node 2
-      [x,y] = nodeBottom(n2);
-      y += line2Length;
+    if(drawLinks){
+      //move to top of node and draw the current length of link upward
+      let [x,y] = nodeTop(n1);
       ctx.moveTo(x, y);
-      ctx.lineTo(x, y - currentLength);
+      ctx.lineTo(x, y - (currentLength < line1Length ? currentLength : line1Length));
+
+      //draw second line if wrapping
+      if(currentLength > line1Length && wrapping){
+        currentLength -= line1Length; //remove already drawn portion of length
+        //move to bottom of matrix and draw remainder of link towards node 2
+        [x,y] = nodeBottom(n2);
+        y += line2Length;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y - currentLength);
+      }
     }
     updateLinkAnimationState(link);
   }
@@ -219,19 +223,21 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     let line2Length = wrapping ? gridSize*n2.row + 1.5*gridSize : 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
-    //move to bottom of node and draw the current length of link downward
-    let [x,y] = nodeBottom(n1);
-    ctx.moveTo(x, y);
-    ctx.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
-
-    //draw second line if wrapping
-    if(currentLength > line1Length && wrapping){
-      currentLength -= line1Length; //remove already drawn portion of length
-      //move to top of matrix and draw remainder of link towards node 2
-      [x,y] = nodeTop(n2);
-      y -= line2Length;
+    if(drawLinks){
+      //move to bottom of node and draw the current length of link downward
+      let [x,y] = nodeBottom(n1);
       ctx.moveTo(x, y);
-      ctx.lineTo(x, y + currentLength);
+      ctx.lineTo(x, y + (currentLength < line1Length ? currentLength : line1Length));
+
+      //draw second line if wrapping
+      if(currentLength > line1Length && wrapping){
+        currentLength -= line1Length; //remove already drawn portion of length
+        //move to top of matrix and draw remainder of link towards node 2
+        [x,y] = nodeTop(n2);
+        y -= line2Length;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + currentLength);
+      }
     }
     updateLinkAnimationState(link);
   }
@@ -247,19 +253,21 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     let line2Length = wrapping ? gridSize*(matrix().cols.length - n2.col) - 0.5*gridSize : 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
-    //move to left of node and draw the current length of link leftward
-    let [x,y] = nodeLeft(n1);
-    ctx.moveTo(x, y);
-    ctx.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
-
-    //draw second line if wrapping
-    if(currentLength > line1Length && wrapping){
-      currentLength -= line1Length; //remove already drawn portion of length
-      //move to right of matrix and draw remainder of link towards node 2
-      [x,y] = nodeRight(n2);
-      x += line2Length;
+    if(drawLinks){
+      //move to left of node and draw the current length of link leftward
+      let [x,y] = nodeLeft(n1);
       ctx.moveTo(x, y);
-      ctx.lineTo(x - currentLength, y);
+      ctx.lineTo(x - (currentLength < line1Length ? currentLength : line1Length), y);
+
+      //draw second line if wrapping
+      if(currentLength > line1Length && wrapping){
+        currentLength -= line1Length; //remove already drawn portion of length
+        //move to right of matrix and draw remainder of link towards node 2
+        [x,y] = nodeRight(n2);
+        x += line2Length;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - currentLength, y);
+      }
     }
     updateLinkAnimationState(link);
   }
@@ -275,19 +283,21 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     let line2Length = wrapping ? gridSize*n2.col + 1.5*gridSize : 0;
     let currentLength = (line1Length + line2Length) * link.pct/100;
 
-    //move to right of node and draw the current length of link rightward
-    let [x,y] = nodeRight(n1);
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
-
-    //draw second line if wrapping
-    if(currentLength > line1Length && wrapping){
-      currentLength -= line1Length; //remove already drawn portion of length
-      //move to left of matrix and draw remainder of link towards node 2
-      [x,y] = nodeLeft(n2);
-      x -= line2Length;
+    if(drawLinks){
+      //move to right of node and draw the current length of link rightward
+      let [x,y] = nodeRight(n1);
       ctx.moveTo(x, y);
-      ctx.lineTo(x + currentLength, y);
+      ctx.lineTo(x + (currentLength < line1Length ? currentLength : line1Length), y);
+
+      //draw second line if wrapping
+      if(currentLength > line1Length && wrapping){
+        currentLength -= line1Length; //remove already drawn portion of length
+        //move to left of matrix and draw remainder of link towards node 2
+        [x,y] = nodeLeft(n2);
+        x -= line2Length;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + currentLength, y);
+      }
     }
     updateLinkAnimationState(link);
   }
@@ -445,6 +455,10 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
 
+  const drawLinksCB = (event: MouseEvent): void => {
+
+  };
+
   //returns a promise object with exposed resolve and reject handles
   //this is used to let the canvas update loop tell the AlgXSearch that animation has finished
   const exposedPromise = (): any => {
@@ -469,14 +483,16 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <label id='speedL' for='speed'>speed</label>
         <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
+        <label id='drawlinkL' for='drawLinks'>draw links</label>
+        <input type='checkbox' id='drawLinks' ref={drawLinksBox} value='draw' onClick={drawLinksCB}/>
       </div>
       <div className='legend'>
+        <div id='uncoveredText'>Uncovered Node</div>
         <div id='uncoveredColor'></div>
-        <div id='uncoveredText'></div>
+        <div id='coveredText'>Covered Node</div>
         <div id='coveredColor'></div>
-        <div id='coveredText'></div>
+        <div id='solutionText'>Partial Solution</div>
         <div id='solutionColor'></div>
-        <div id='solutionText'></div>
       </div>
       <div className='solutionContainer'>
         <span id='phase'>{phase().length > 0 ? phase() : '\u00A0'}</span>
