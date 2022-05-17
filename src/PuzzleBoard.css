@@ -16,7 +16,6 @@
   line-height: 1.6rem;
   text-align: center;
   background-color: var(--square-background-color);
-  font-family: 'Ubuntu',sans-serif;
 }
 
 .PuzzleSquare:focus {
@@ -41,7 +40,6 @@
   line-height: 1.6rem;
   text-align: center;
   background-color: var(--square-background-color);
-  font-family: 'Ubuntu',sans-serif;
 }
 
 .MatrixIndex:focus {

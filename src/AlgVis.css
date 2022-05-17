@@ -12,12 +12,11 @@
   border-color: var(--btn-border-color);
   border-width: 1px 1px 1px 1px;
   border-style: solid;
-  font-family: 'Ubuntu',sans-serif;
   font-weight: 700;
   color: var(--btn-text-color);
   text-align: center;
+  user-select: none;
 }
-
 .Animator button:focus {
   outline-offset: 0.1rem;
   outline-color: var(--btn-focus-border-color);
@@ -43,7 +42,6 @@
   color: var(--btn-sel-text-color);
   border: 1px solid var(--btn-sel-border-color);
 }
-
 .Animator #stepBtn{
   margin-left: 0.5rem;
   border-right: 0px;
@@ -66,12 +64,11 @@
   font-weight: 700;
 }
 .Animator .inputs label{
-  font-family: 'Ubuntu',sans-serif;
   margin-right: 0.3rem;
   font-size: 12px;
   text-align: right;
 }
-.Animator .inputs input{
+.Animator .inputs input[type=range]{
   height: 2px;
   width: 5rem;
   accent-color: rgb(71, 114, 255);
@@ -94,9 +91,19 @@
   grid-column: 5;
   grid-row: 2;
 }
+.Animator .inputs #drawLinksL{
+  grid-column: 4;
+  grid-row: 3;
+}
+.Animator .inputs #drawLinks{
+  grid-column: 5;
+  grid-row: 3;
+  accent-color: rgb(71, 114, 255);
+}
+
 .Animator .legend{
   display: flex;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   align-items: center;
   font-size: 14px;
   font-weight: 500;

@@ -35,7 +35,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //component state variables
   let linkLen = nodeSize();
   let gridSize = nodeSize() + linkLen
-  let drawLinks: boolean = false;
+  let drawLinks: boolean = true;
   let canvas: any;
   let ctx: CanvasRenderingContext2D;
   let lastUpdate: number;
@@ -111,6 +111,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     ctx = canvas.getContext('2d');
     scaleSlider.value = 4;
     speedSlider.value = 2;
+    drawLinksBox.checked = true;
     updateMatrix();
     updateCanvasSize();
     lastUpdate = performance.now();
@@ -456,7 +457,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   const drawLinksCB = (event: MouseEvent): void => {
-
+    drawLinks = drawLinksBox.checked;
   };
 
   //returns a promise object with exposed resolve and reject handles
@@ -483,8 +484,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
         <label id='speedL' for='speed'>speed</label>
         <input type='range' id='scale' ref={scaleSlider} min='1' max='6' onInput={scaleSliderCB}/>
         <input type='range' id='speed' ref={speedSlider} min='1' max='5' onInput={speedSliderCB}/>
-        <label id='drawlinkL' for='drawLinks'>draw links</label>
-        <input type='checkbox' id='drawLinks' ref={drawLinksBox} value='draw' onClick={drawLinksCB}/>
+        <label id='drawLinksL' for='drawLinks'>links</label>
+        <input type='checkbox' id='drawLinks' ref={drawLinksBox} onClick={drawLinksCB}/>
       </div>
       <div className='legend'>
         <div id='uncoveredText'>Uncovered Node</div>
