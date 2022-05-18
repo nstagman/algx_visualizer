@@ -405,7 +405,13 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   const updateNodeSize = (): void => {
-    const base = matrix().rows.length > 300 ? 1 : 3
+    let base = 3;
+    if(matrix().rows.length > 300){
+      base = 1;
+      if(Number(scaleSlider.value) > 3){
+        scaleSlider.value = 3;
+      }
+    }
     switch(Number(scaleSlider.value)){
       case 1:
         setNodeSize(base);

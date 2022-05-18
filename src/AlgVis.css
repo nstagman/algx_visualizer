@@ -104,7 +104,7 @@
 
 .Animator .legend{
   display: flex;
-  margin: 1rem 0;
+  margin: 0.5rem 0;
   align-items: center;
   font-size: 14px;
   font-weight: 500;
@@ -136,6 +136,7 @@
 
 .Animator .solutionContainer{
   display: flex;
+  margin-bottom: 0.25rem;
   flex-direction: column;
   align-items: flex-start;
   font-size: 14px;
