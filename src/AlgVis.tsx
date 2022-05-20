@@ -33,7 +33,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   const [play, setPlay] = createSignal(false);
 
   //component state variables
-  let linkLen = nodeSize();
+  let linkLen = nodeSize()-2;
   let gridSize = nodeSize() + linkLen
   let drawLinks: boolean = true;
   let canvas: any;
@@ -148,11 +148,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   const drawMatrix = (): void => {
     //shift canvas coordinates to allow negative node columns and rows (headers)
-    ctx.clearRect(0, 0, width(), height());
     ctx.fillStyle = canvasColor;
     ctx.fillRect(0, 0, width(), height());
-    ctx.save()
-    ctx.translate(2*gridSize, 2*gridSize);
 
     matrix().allNodeMap((node: AlgXNode): void => {
       drawNode(node.nodeInfo);
@@ -168,7 +165,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
       drawRightLink(node.linkInfo.right, node.nodeInfo, node.right.nodeInfo);
     });
     ctx.stroke();
-    ctx.restore();
   };
 
   const drawNode = (node: NodeDrawInfo):void => {
@@ -332,19 +328,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //translates matrix row, col position to a tuple of canvas coordinates for a given node
   const nodeCenter = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize()/2, node.row*gridSize + nodeSize()/2];
+    return [node.col*gridSize + nodeSize()/2 + 2*gridSize, node.row*gridSize + nodeSize()/2 + 2*gridSize];
   };
   const nodeTop = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize()/2, node.row*gridSize];
+    return [node.col*gridSize + nodeSize()/2 + 2*gridSize, node.row*gridSize + 2*gridSize];
   };
   const nodeBottom = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize()/2, node.row*gridSize + nodeSize()];
+    return [node.col*gridSize + nodeSize()/2 + 2*gridSize, node.row*gridSize + nodeSize() + 2*gridSize];
   };
   const nodeLeft = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize, node.row*gridSize + nodeSize()/2];
+    return [node.col*gridSize + 2*gridSize, node.row*gridSize + nodeSize()/2 + 2*gridSize];
   };
   const nodeRight = (node: NodeDrawInfo): [number, number] => {
-    return [node.col*gridSize + nodeSize(), node.row*gridSize + nodeSize()/2];
+    return [node.col*gridSize + nodeSize() + 2*gridSize, node.row*gridSize + nodeSize()/2 + 2*gridSize];
   };
 
   //button callbacks
@@ -408,8 +404,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     let base = 3;
     if(matrix().rows.length > 300){
       base = 1;
-      if(Number(scaleSlider.value) > 3){
-        scaleSlider.value = 3;
+      if(Number(scaleSlider.value) > 2){
+        scaleSlider.value = 2;
       }
     }
     switch(Number(scaleSlider.value)){
