@@ -85,20 +85,19 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     batch(() => {
       if(!props.sudoku){
         for(const [i, square] of props.UIState.entries()){
-          if(solution().includes((i/props.cols)|0) && untrack(() => square.manValue()) > 0){
-            square.setSolution(true);
-          }
-          else{ square.setSolution(false); }
+          //update square if it is in a solution row and is not a zero
+          const isSolution = solution().includes((i/props.cols)|0) && untrack(() => square.manValue()) > 0;
+          square.setSolution(isSolution);
         }
       }
       else{
         const decodedSolution: Array<number> = decodeSolution(solution(), props.UIState.length);
         for(const [i, sol] of decodedSolution.entries()){
           const square = props.UIState[i];
+          //update square with actual solution only if user did not enter the value
           if(square != null && untrack(() => square.manValue()) === 0){
             square.setValue(sol);
-            if(sol > 0){ square.setSolution(true); }
-            else{ square.setSolution(false); }
+            square.setSolution(sol > 0);
           }
         }
       }
@@ -147,7 +146,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   };
 
   const drawMatrix = (): void => {
-    //shift canvas coordinates to allow negative node columns and rows (headers)
+    //clear canvas for next frame
     ctx.fillStyle = canvasColor;
     ctx.fillRect(0, 0, width(), height());
 
@@ -343,26 +342,32 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     return [node.col*gridSize + nodeSize() + 2*gridSize, node.row*gridSize + nodeSize()/2 + 2*gridSize];
   };
 
-  //button callbacks
+  //start the search function on the current matrix
+  //consume algX generator - animate each update to the matrix
   const solve = async (): Promise<void> => {
     for(const update of matrix().animatedAlgXSearch()){
       if(!turbo) { setSolution(matrix().solution.slice()); }
       setPhase(matrix().phase);
+
+      //'turbo mode' - only update matrix if solution has changed
       if(turbo && play()){
         //check if solution has been updated
         const eq = solution().length === matrix().solution.length && 
           solution().every((v, i) => v === matrix().solution[i])
-        if(!eq){ //if solution has changed then wait a short amount of time
+        if(!eq){ //if solution has changed then wait a short amount of time to not solve 'instantly'
           setSolution(matrix().solution.slice());
           await new Promise(res => setTimeout(res, 50))
         }
       }
-      else if((update === 0 || !play()) && !turbo){ //no timeout specified - wait for animator to finish this step
+      //'standard mode' wait for animator to finish current animations
+      else if((update === 0 || !play()) && !turbo){
         animationComplete = exposedPromise();
         await animationComplete;
         animationComplete = null;
       }
+      //quit if search flag has been reset
       if(!searching) { break; }
+      //step mode - wait for step button to be clicked
       if(!play()){
         stepComplete = exposedPromise();
         await stepComplete;
@@ -371,6 +376,8 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
 
+  //button callbacks
+  //start search, toggle between step mode and play mode if already searching
   const playCB = async (event: MouseEvent): Promise<void> => {
     if(!searching){
       searching = true;
@@ -387,6 +394,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   }
 
+  //resolve step promise if in step mode - otherwise enter step mode
   const stepCB = (event: MouseEvent): void => {
     if(!play() && stepComplete !== null){
       stepComplete.resolve(true);
@@ -396,10 +404,12 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
   };
 
+  //trigger a 'manual' update to UI to reset the matrix
   const restartCB = (event: MouseEvent): void => {
     props.UIState[0].setManValue(props.UIState[0].manValue());
   };
 
+  //scale node size based on the slider
   const updateNodeSize = (): void => {
     let base = 3;
     if(matrix().rows.length > 300){
@@ -435,6 +445,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     updateNodeSize();
   };
 
+  //scale animation speed based on slider
   const speedSliderCB = (event: Event): void => {
     turbo = false;
     switch(Number(speedSlider.value)){
