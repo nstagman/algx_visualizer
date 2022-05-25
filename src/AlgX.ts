@@ -1,4 +1,4 @@
-import { NodeDrawInfo, LinkDrawInfo } from './AlgVis';
+import { NodeDrawInfo, LinkDrawInfo } from './AlgXAnimator';
 
 
 class AlgXNode {

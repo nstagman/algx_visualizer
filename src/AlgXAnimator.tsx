@@ -1,4 +1,4 @@
-import './AlgVis.css'
+import './AlgXAnimator.css'
 import { AlgXNode, buildMatrix, buildSudMatrix, decodeSolution } from './AlgX';
 import { JSXElement, Component, createSignal, createEffect, onMount, batch, untrack } from 'solid-js';
 

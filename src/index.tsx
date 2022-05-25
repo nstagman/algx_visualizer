@@ -1,6 +1,6 @@
 import { render } from 'solid-js/web';
 
 import './index.css';
-import AlgorithmVisualizer from './App';
+import VisualizerApp from './App';
 
-render(() => <AlgorithmVisualizer />, document.getElementById('root') as HTMLElement);
+render(() => <VisualizerApp />, document.getElementById('root') as HTMLElement);

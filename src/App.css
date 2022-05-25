@@ -26,6 +26,44 @@
   margin: 1rem;
   min-width: 18rem;
 }
+.UXBlock .btns{
+  display: grid;
+}
+.UXBlock #mat{
+  grid-column: 1;
+  grid-row: 2;
+}
+.UXBlock #fxf{
+  grid-column: 2;
+  grid-row: 2;
+}
+.UXBlock #nxn{
+  grid-column: 3;
+  grid-row: 2;
+}
+.UXBlock #sudcontainer{
+  display: flex;
+  justify-content: center;
+  grid-column: 2 / 4;
+  grid-row: 1;
+  margin-bottom: 0.1rem;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  border-width: 1px;
+  border-style: solid;
+  border-bottom: 0px;
+  border-color: var(--btn-sel-border-color);
+  width: 100px;
+  justify-self: center;
+}
+.UXBlock #sudtitle{
+  margin-top: -18px;
+  padding: 5px;
+  font-size: 16px;
+  color: var(--btn-sel-border-color);
+  background-color: rgb(220, 220, 220);
+}
 .UXBlock button{
   margin: 0 0.15rem 0 0.15rem;
   padding: 4px 10px;

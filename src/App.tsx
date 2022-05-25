@@ -1,10 +1,10 @@
 import './App.css'
 import { Component, createSignal, batch } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
-import { AlgXAnimator } from './AlgVis';
+import { AlgXAnimator } from './AlgXAnimator';
 
 
-const AlgorithmVisualizer: Component = () => {
+const VisualizerApp: Component = () => {
   const [rows, setRows] = createSignal(6);
   const [cols, setCols] = createSignal(7);
   const [boardState, setBoardState] = createBoardState(rows() * cols(), {equals: false});
@@ -136,9 +136,13 @@ const AlgorithmVisualizer: Component = () => {
     <div className='VisualizerApp'>
       <div className='UXBlock'>
         <div className='btns'>
-          <button classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> matrix </button>
-          <button classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4 x 4 </button>
-          <button classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9 x 9 </button>
+          <button id='mat' classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> matrix </button>
+          <button id='fxf' classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4 x 4 </button>
+          <button id='nxn' classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9 x 9 </button>
+          <div id='sudcontainer'>
+            <div id='sudtitle'>Sudoku</div>
+          </div>
+          
         </div>
         <PuzzleBoard
           boardState={boardState()}
@@ -157,4 +161,4 @@ const AlgorithmVisualizer: Component = () => {
   );
 };
 
-export default AlgorithmVisualizer;
+export default VisualizerApp;
