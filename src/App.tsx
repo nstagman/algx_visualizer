@@ -136,13 +136,12 @@ const VisualizerApp: Component = () => {
     <div className='VisualizerApp'>
       <div className='UXBlock'>
         <div className='btns'>
-          <button id='mat' classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> matrix </button>
-          <button id='fxf' classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4 x 4 </button>
-          <button id='nxn' classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9 x 9 </button>
           <div id='sudcontainer'>
             <div id='sudtitle'>Sudoku</div>
           </div>
-          
+          <button id='mat' classList={{selected: UI() === UIType.matrix}} onClick={customMatrix}> matrix </button>
+          <button id='fxf' classList={{selected: UI() === UIType.fxf}} onClick={fxf}> 4 x 4 </button>
+          <button id='nxn' classList={{selected: UI() === UIType.nxn}} onClick={nxn}> 9 x 9 </button>
         </div>
         <PuzzleBoard
           boardState={boardState()}

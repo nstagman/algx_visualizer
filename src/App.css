@@ -23,7 +23,7 @@
   display: flex;
   flex-direction: column;
   align-items:center;
-  margin: 1rem;
+  margin: 1.15rem;
   min-width: 18rem;
 }
 .UXBlock .btns{
@@ -46,20 +46,20 @@
   justify-content: center;
   grid-column: 2 / 4;
   grid-row: 1;
+  justify-self: center;
   margin-bottom: 0.1rem;
   font-family: inherit;
   font-weight: 700;
   font-size: 16px;
-  border-width: 1px;
+  border-width: 2px;
   border-style: solid;
   border-bottom: 0px;
   border-color: var(--btn-sel-border-color);
   width: 100px;
-  justify-self: center;
 }
 .UXBlock #sudtitle{
-  margin-top: -18px;
-  padding: 5px;
+  margin-top: -16px;
+  padding: 3px 3px;
   font-size: 16px;
   color: var(--btn-sel-border-color);
   background-color: rgb(220, 220, 220);
