@@ -108,7 +108,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
   //this is the entry point for the animator
   onMount(() => {
     ctx = canvas.getContext('2d');
-    scaleSlider.value = 4;
+    scaleSlider.value = 5;
     speedSlider.value = 2;
     drawLinksBox.checked = true;
     updateMatrix();

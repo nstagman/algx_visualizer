@@ -1,5 +1,5 @@
 import './App.css'
-import { Component, createSignal, batch } from 'solid-js';
+import { Component, createSignal, batch, Show } from 'solid-js';
 import { PuzzleBoard, createBoardState} from './PuzzleBoard';
 import { AlgXAnimator } from './AlgXAnimator';
 
@@ -41,6 +41,38 @@ const VisualizerApp: Component = () => {
     boardState()[34].setManValue(1);
     boardState()[36].setManValue(1);
     boardState()[41].setManValue(1);
+    nxn();
+    boardState()[4].setManValue(7);
+    boardState()[5].setManValue(4);
+    boardState()[8].setManValue(5);
+    boardState()[15].setManValue(2);
+    boardState()[21].setManValue(3);
+    boardState()[23].setManValue(5);
+    boardState()[25].setManValue(7);
+    boardState()[26].setManValue(6);
+    boardState()[29].setManValue(9);
+    boardState()[30].setManValue(4);
+    boardState()[32].setManValue(2);
+    boardState()[34].setManValue(8);
+    boardState()[36].setManValue(1);
+    boardState()[37].setManValue(8);
+    boardState()[40].setManValue(6);
+    boardState()[46].setManValue(3);
+    boardState()[54].setManValue(2);
+    boardState()[57].setManValue(5);
+    boardState()[60].setManValue(8);
+    boardState()[63].setManValue(3);
+    boardState()[64].setManValue(5);
+    boardState()[68].setManValue(1);
+    boardState()[74].setManValue(8);
+    boardState()[78].setManValue(9);
+    fxf();
+    boardState()[1].setManValue(1);
+    boardState()[2].setManValue(3);
+    boardState()[4].setManValue(2);
+    boardState()[11].setManValue(3);
+    boardState()[13].setManValue(2);
+    customMatrix();
   };
 
   //store the manually entered values of the current boardstate into respective array
@@ -132,6 +164,10 @@ const VisualizerApp: Component = () => {
 
   initApp();
 
+  const matrixDesc = 'Modify the binary matrix then click Solve to find an Exact Cover. \
+                      An exact cover is a set of rows where each column is represented exactly once.'
+  const sudDesc = 'Enter a Sudoku Puzzle and click Solve to solve the sudoku. \
+                   The sudoku is automatically translated to a constraint matrix to be solved.'
   return (
     <div className='VisualizerApp'>
       <div className='UXBlock'>
@@ -149,6 +185,9 @@ const VisualizerApp: Component = () => {
           rows={rows()}
           cols={cols()}
         />
+        <div id='help'>
+          {UI()===UIType.matrix ? matrixDesc : sudDesc}
+        </div>
       </div>
       <AlgXAnimator 
         UIState={boardState()}
