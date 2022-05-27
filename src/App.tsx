@@ -164,10 +164,10 @@ const VisualizerApp: Component = () => {
 
   initApp();
 
-  const matrixDesc = 'Modify the binary matrix then click Solve to find an Exact Cover. \
+  const matrixDesc = 'Modify the binary matrix, then click \'Solve\' to search for an Exact Cover. \
                       An exact cover is a set of rows where each column is represented exactly once.'
-  const sudDesc = 'Enter a Sudoku Puzzle and click Solve to solve the sudoku. \
-                   The sudoku is automatically translated to a constraint matrix to be solved.'
+  const sudDesc = 'Enter a sudoku puzzle, then click \'Solve\' to search for a solution. \
+                   The sudoku is automatically translated to the binary constraint matrix on the right.'
   return (
     <div className='VisualizerApp'>
       <div className='UXBlock'>
