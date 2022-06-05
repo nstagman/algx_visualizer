@@ -63,6 +63,7 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
     }
     if(props.sudoku){ setMatrix(buildSudMatrix(matrixData)); }
     else{ setMatrix(buildMatrix(matrixData, props.rows, props.cols)); }
+    untrack(() => { updateNodeSize(); });
     searching = false;
     setPlay(false);
     if(stepComplete !== null){ stepComplete.resolve(true); }
@@ -71,7 +72,6 @@ const AlgXAnimator: Component<any> = (props: any): JSXElement => {
 
   //updates the canvas size to draw full matrix
   const updateCanvasSize = (): void => {
-    untrack(() => { updateNodeSize(); });
     linkLen = nodeSize();
     gridSize = nodeSize() + linkLen;
     setWidth(gridSize * matrix().cols.length + gridSize*2.5);
