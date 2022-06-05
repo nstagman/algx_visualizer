@@ -1,34 +1,9 @@
-## Usage
+# Exact Cover Visualizer
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+### An animated [Algorithm X](https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X) search to visualize the solving an exact cover problem.
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+#### The [visualizer-app](https://nstagman.github.io/algx_visualizer/) can solve a user modified binary matrix as well as 4x4 and 9x9 sudoku puzzles.
 
-```bash
-$ npm install # or pnpm install or yarn install
-```
+##### The sudoku puzzles are automatically converted from their standard form into a binary constraint matrix to be solved by algorithm x. Each row of these matrices represents a single candidate in one square of the puzzle and each column represents a constraint for the puzzle (e.g., a '3' in the second row). This translates to the 4x4 sudoku having a 64x64 constraint matrix, and the 9x9 sudoku having a 729x324 matrix. The app limits the 9x9 constraint matrix to a reasonable size so it can still be animated on the canvas.
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm dev` or `npm start`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+#### The algorithm visualization was achieved by animating the constraint matrix on an html canvas. [Solidjs](https://www.solidjs.com/) was leveraged to give the app its reactivity.
